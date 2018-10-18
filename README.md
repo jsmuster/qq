@@ -1,5 +1,5 @@
 # qq
-QQ is a development platform for building highly modular, maintainable mobile and desktop applications quickly (qq).
+QQ is a development platform for building highly modular, maintainable mobile and desktop applications quickly.
 
 ## Quickstart
 
