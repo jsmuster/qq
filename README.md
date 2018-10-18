@@ -1,6 +1,8 @@
 # qq
 QQ is a development platform for building highly modular, maintainable mobile and desktop applications quickly.
 
+A good framework should be comprised of concepts easily understood by any programmer.
+
 ## Quickstart
 
 [Get started in 5 minutes][quickstart].
