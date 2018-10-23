@@ -3,7 +3,9 @@ QQ is a development platform for building highly modular, maintainable applicati
 
 QQ is comprised of concepts easily understood by any programmer.
 
-QQ excells at desktop, mobile & server applications; including chrome extensions.
+QQ is WORA capable. It's a modular, cross-platform "write once, run anywhere" program. A program written with QQ will work on desktop, mobile, as chrome extension and even server side NodeJS application.
+
+Main focus of QQ is quick application development and deployment.
 
 ## Quickstart
 
