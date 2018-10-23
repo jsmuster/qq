@@ -1,0 +1,25 @@
+{
+	"access":{
+		"css":{"subfolders": true, "static": true},
+		"images":{"subfolders": true, "q":["*.png", "*.jpg", "*.gif", "!*.svg"], "static": true},
+		"js":{"subfolders":true, "q":"*.js"},
+		".":{"q":["*.js", "*.html"]}
+	},
+	"read":{
+		"images":{"default":"default.png"}
+	},
+	"cache":{
+		"css":{"q":"*.css", "static": true},
+		"images": {"static": true},
+		"js": {"subfolders": true, "q":["*.js", "a*.js"]},
+		"modules":{"subfolders": true, "q":"*.*", "static": true}
+	},
+	"app":{
+		"container":"#wdgtMMOrders",
+		"controllers":"./app/modules/controller/",
+		"views":"./app/modules/view/",
+		"modules": ["mmOrders"],
+		
+		"main": "./app/index.html"
+	}
+}

@@ -1,0 +1,15 @@
+<view>
+	<div id="imageTests">
+				
+				<article>
+					<a id="updateImage1" type="submit" class="btn btn-info" href="#">update 1</a>
+					<div id="image1"><p><img src="/assets/img/fairys/beautiful-fairies.jpg" border="0" /></p></div>
+				</article>
+				
+				<article>
+					<a id="updateImage2" type="submit" class="btn btn-info" href="#">update 2</a>
+					<div><p><img id="image2" src="/assets/img/fairys/hadas.jpeg" border="0" /></p></div>
+				</article>
+		    
+	</div>
+</view>

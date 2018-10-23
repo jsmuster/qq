@@ -1,0 +1,3 @@
+{
+	"dd1":{"value":"MA", "options":[{"text":"New York", "value":"NY"}, {"text":"New Jersey", "value":"NJ", "selected":true}, {"text":"Connecticut", "value":"CT"}, {"text":"Massachusets", "value":"MA"}, {"text":"V.I.P", "value":"VIP"}]}
+}
