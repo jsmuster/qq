@@ -3,24 +3,25 @@
   "version": "1.0.0",
   "private": true,
   "description": "QQ - a framework for building highly modular, maintainable applications quickly (qq).",
-  "homepage": "https://github.com/jsmuster/qq",
-  "bugs": "https://github.com/jsmuster/qq/issues",
+  "homepage": "https://github.com/jsmuster/qq#readme",
+  "bugs": {
+    "url": "https://github.com/jsmuster/qq/issues"
+  },
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "https://github.com/jsmuster/qq.git"
   },
-
   "main": "qq.js",
-
   "scripts": {
     "start": "node server.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "debug": ""
   },
-
   "dependencies": {
+    "cheerio": "^1.0.0-rc.2",
+    "vm2": "^3.6.4"
   },
-
   "keywords": [
     "client-side",
     "browser",
@@ -31,8 +32,5 @@
     "sdk",
     "devkit"
   ],
-  "author": "Arseniy Tomkevich",
-
-  "bugs": { "url": "https://github.com/jsmuster/qq/issues" }, "homepage":
-  "https://github.com/jsmuster/qq#readme"
+  "author": "Arseniy Tomkevich"
 }
