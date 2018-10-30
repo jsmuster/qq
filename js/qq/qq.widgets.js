@@ -64,7 +64,17 @@ catch(e)
 			_isNode = true;
 			root = this;
 
-			module.exports = qq;
+			module.exports = function (qqref)
+			{
+				if(qqref != null)
+				{
+					qq = qqref;
+				}
+				
+				registerWidgets(qq);
+				
+				return qq;
+			};
 		}
 		else
 		{
@@ -75,7 +85,10 @@ catch(e)
 	catch(e)
 	{}
 
-	(function ($, qq)
+	/**
+	* Function that registers all the basic widgets.
+	*/
+	var registerWidgets = (function (qq)
 	{
 		/* TEXT WIDGET */
 		qq.register.widget("text", {
@@ -98,7 +111,7 @@ catch(e)
 							
 							for(i = 0, l = data.length; i < l; i++)
 							{
-								wrapper = $(cfg.transformer.opts);
+								wrapper = qq.$(cfg.transformer.opts);
 								
 								wrapper.html(data[i]);
 								
@@ -107,7 +120,7 @@ catch(e)
 						}
 						else
 						{
-							wrapper = $(cfg.transformer.opts);
+							wrapper = qq.$(cfg.transformer.opts);
 							
 							wrapper.html(data);
 							
@@ -453,6 +466,11 @@ catch(e)
 		// 					};
 		// }()));
 		
-	}(qq.$, qq));
+	});
+	
+	if(_isNode == false)
+	{
+		registerWidgets(qq);
+	}
 
 }).apply(this, [qq]);

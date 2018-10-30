@@ -1,0 +1,38 @@
+<view>
+    <div id="mmOrders">
+
+        <!-- Editable table -->
+        <div class="card">
+            <h3 class="card-header text-center font-weight-bold text-uppercase py-4">Orders</h3>
+            <div class="card-body">
+                <div id="table" class="table-editable">
+                    <span class="table-add float-right mb-3 mr-2">
+                    	<a href="#!" class="text-success">
+                    		<i class="fa fa-plus fa-2x" aria-hidden="true"></i>
+                    	</a>
+                    </span>
+                    <table id='mmOrderList' class="table table-bordered table-responsive-md table-striped text-center">
+                        <tr id='mmOItem'>
+                            <td id='mmOIContainer'>
+                                <div id="mmOIGroup">
+                                    <div id="mmOrderItem" class="mmOrderItem">
+                                        <div>
+                                        	<div class="mmOrderItemAction">$0</div>
+                                        </div>
+                                        <div>
+                                        	<div class="mmOrderItemValue">10</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <!-- Editable table -->
+
+    </div>
+
+
+</view>

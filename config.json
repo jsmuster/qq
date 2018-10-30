@@ -1,7 +1,8 @@
 {
 	"access":{
-		"css":{"subfolders": true, "static": true},
-		"images":{"subfolders": true, "q":["*.png", "*.jpg", "*.gif", "!*.svg"], "static": true},
+		"assets/css":{"subfolders": true},
+		"assets/js":{"subfolders": true},
+		"images":{"subfolders": true, "q":["*.png", "*.jpg", "*.gif", "!*.svg"]},
 		"js":{"subfolders":true, "q":"*.js"},
 		".":{"q":["*.js", "*.html"]}
 	},
@@ -18,8 +19,9 @@
 		"container":"#wdgtMMOrders",
 		"controllers":"./app/modules/controller/",
 		"views":"./app/modules/view/",
-		"modules": ["mmOrders"],
-		
+		"modules": ["mmOrders", "mmCart"],
+
 		"main": "./app/index.html"
-	}
+	},
+	"favicon":""
 }

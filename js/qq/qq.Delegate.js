@@ -66,7 +66,17 @@ catch(e)
 			_isNode = true;
 			root = this;
 
-			module.exports = qq;
+			module.exports = function (qqref)
+			{
+				if(qqref != null)
+				{
+					qq = qqref;
+				}
+
+				registerDelegate(qq);
+				
+				return qq;
+			};
 		}
 		else
 		{
@@ -77,131 +87,30 @@ catch(e)
 	catch(e)
 	{}
 
-	qq.Delegate =
+	function registerDelegate(qq)
 	{
-		create: function(ref, fn)
+		qq.Delegate =
 		{
-			var execTimes = -2;
-
-			if(arguments.length >= 2)
+			create: function(ref, fn)
 			{
-				/* check if the 2nd argument is a number and 3rd a function */
-				if(arguments.length >= 3)
+				var execTimes = -2;
+
+				if(arguments.length >= 2)
 				{
-					var istart = 2;
-
-					if(typeof(fn) == "number")
-					{
-						execTimes = fn;
-						fn = arguments[2];
-
-						istart = 3;
-					}
-
-					/* the delegate is identical to one bellow in next if else statement */
-					var delegate = function ()
-					{
-						var execTimes = arguments.callee.execTimes,
-							execCount = arguments.callee.execCount;
-
-						if(execCount > 0 || execTimes == -2)
-						{
-							var fn2 = arguments.callee.fnRef,
-								objRef2 = arguments.callee.objRef,
-								args = arguments.callee.args,
-								newArgs = [],
-								i, l;
-							
-							for(i = 0, l = args.length; i < l; i++)
-							{
-								newArgs[i] = args[i];
-							}
-							
-							for(i = 0, l = arguments.length; i < l; i++)
-							{
-								newArgs[newArgs.length] = arguments[i];
-							}
-
-							execCount--;
-							
-							arguments.callee.execCount = execCount;
-							
-							return fn2.apply(objRef2, newArgs);
-						}
-						else
-						{
-							return null;
-						}
-					};
-					
-					delegate.fnRef = fn;
-					delegate.objRef = ref;
-					
-					delegate.execTimes = execTimes;
-					delegate.execCount = execTimes;
-					
-					var args = new Array();
-					
-					for(i = istart, l = arguments.length; i < l; i++)
-					{
-						args[args.length] = arguments[i];
-					}
-					
-					delegate.args = args;
-					
-					return delegate;
-				}
-				else
-				{
-					if(fn == null)
-					{
-						throw new qq.Error("Delegate.create: Invalid 'fn' reference.");
-					}
-					
-					if(ref == null)
-					{
-						throw new qq.Error("Delegate.create: Invalid 'ref' reference.");
-					}
-
-					/* if we didn't mention a reference but want to create a delegate with a set of pre-defined arguments */
-					if((typeof(ref) == "function" && typeof(fn) != "function"))
-					{
-						/* the delegate is identical to one bellow in next if else statement */
-						var delegate = function ()
-						{
-							var fn2 = arguments.callee.fnRef,
-								objRef2 = arguments.callee.objRef,
-								args = arguments.callee.args,
-								newArgs = [],
-								i, l;
-							
-							for(i = 0, l = args.length; i < l; i++)
-							{
-								newArgs[i] = args[i];
-							}
-							
-							for(i = 0, l = arguments.length; i < l; i++)
-							{
-								newArgs[newArgs.length] = arguments[i];
-							}
-
-							return fn2.apply(objRef2, newArgs);
-						};
-						
-						delegate.fnRef = ref;
-						delegate.objRef = {};
-						
-						delegate.args = [fn];
-					
-						return delegate;
-					}
-					else if((typeof(ref) == "number" && typeof(fn) == "function"))
+					/* check if the 2nd argument is a number and 3rd a function */
+					if(arguments.length >= 3)
 					{
 						var istart = 2;
-						
-						execTimes = ref;
 
-						/* the delegate is similar to one above the statement */
+						if(typeof(fn) == "number")
+						{
+							execTimes = fn;
+							fn = arguments[2];
+
+							istart = 3;
+						}
+
+						/* the delegate is identical to one bellow in next if else statement */
 						var delegate = function ()
 						{
 							var execTimes = arguments.callee.execTimes,
@@ -211,13 +120,25 @@ catch(e)
 							{
 								var fn2 = arguments.callee.fnRef,
 									objRef2 = arguments.callee.objRef,
+									args = arguments.callee.args,
+									newArgs = [],
 									i, l;
 								
+								for(i = 0, l = args.length; i < l; i++)
+								{
+									newArgs[i] = args[i];
+								}
+								
+								for(i = 0, l = arguments.length; i < l; i++)
+								{
+									newArgs[newArgs.length] = arguments[i];
+								}
+
 								execCount--;
 								
 								arguments.callee.execCount = execCount;
 								
-								return fn2.apply(objRef2, arguments);
+								return fn2.apply(objRef2, newArgs);
 							}
 							else
 							{
@@ -226,33 +147,130 @@ catch(e)
 						};
 						
 						delegate.fnRef = fn;
-						delegate.objRef = {};
+						delegate.objRef = ref;
 						
 						delegate.execTimes = execTimes;
 						delegate.execCount = execTimes;
+						
+						var args = new Array();
+						
+						for(i = istart, l = arguments.length; i < l; i++)
+						{
+							args[args.length] = arguments[i];
+						}
+						
+						delegate.args = args;
 						
 						return delegate;
 					}
 					else
 					{
-						return fn.bind(ref);
+						if(fn == null)
+						{
+							throw new qq.Error("Delegate.create: Invalid 'fn' reference.");
+						}
+						
+						if(ref == null)
+						{
+							throw new qq.Error("Delegate.create: Invalid 'ref' reference.");
+						}
+
+						/* if we didn't mention a reference but want to create a delegate with a set of pre-defined arguments */
+						if((typeof(ref) == "function" && typeof(fn) != "function"))
+						{
+							/* the delegate is identical to one bellow in next if else statement */
+							var delegate = function ()
+							{
+								var fn2 = arguments.callee.fnRef,
+									objRef2 = arguments.callee.objRef,
+									args = arguments.callee.args,
+									newArgs = [],
+									i, l;
+								
+								for(i = 0, l = args.length; i < l; i++)
+								{
+									newArgs[i] = args[i];
+								}
+								
+								for(i = 0, l = arguments.length; i < l; i++)
+								{
+									newArgs[newArgs.length] = arguments[i];
+								}
+
+								return fn2.apply(objRef2, newArgs);
+							};
+							
+							delegate.fnRef = ref;
+							delegate.objRef = {};
+							
+							delegate.args = [fn];
+						
+							return delegate;
+						}
+						else if((typeof(ref) == "number" && typeof(fn) == "function"))
+						{
+							var istart = 2;
+							
+							execTimes = ref;
+
+							/* the delegate is similar to one above the statement */
+							var delegate = function ()
+							{
+								var execTimes = arguments.callee.execTimes,
+									execCount = arguments.callee.execCount;
+
+								if(execCount > 0 || execTimes == -2)
+								{
+									var fn2 = arguments.callee.fnRef,
+										objRef2 = arguments.callee.objRef,
+										i, l;
+									
+									execCount--;
+									
+									arguments.callee.execCount = execCount;
+									
+									return fn2.apply(objRef2, arguments);
+								}
+								else
+								{
+									return null;
+								}
+							};
+							
+							delegate.fnRef = fn;
+							delegate.objRef = {};
+							
+							delegate.execTimes = execTimes;
+							delegate.execCount = execTimes;
+							
+							return delegate;
+						}
+						else
+						{
+							return fn.bind(ref);
+						}
 					}
 				}
-			}
-			else
+				else
+				{
+					throw new qq.Error("Delegate.create: Invalid 'ref' & 'fn' references.");
+				}
+			},
+			destroy: function(delegate)
 			{
-				throw new qq.Error("Delegate.create: Invalid 'ref' & 'fn' references.");
+				delegate.fnRef = null;
+				delegate.objRef = null;
+				delegate.args = null;
 			}
-		},
-		destroy: function(delegate)
-		{
-			delegate.fnRef = null;
-			delegate.objRef = null;
-			delegate.args = null;
-		}
+		};
+
+		qq.delegate = qq.Delegate;
+		qq.del = qq.delegate;
 	};
 
-	qq.delegate = qq.Delegate;
-	qq.del = qq.delegate;
+	if(_isNode == false)
+	{
+		registerDelegate(qq);
+	}
 
 }).apply(this, [qq]);

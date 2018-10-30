@@ -64,6 +64,16 @@ var appRouter = qq.rr.add(/stocks\/(.*)/, function()
 	
 	qq.console(msg);
 })
+.add("cart", function ()
+{
+	var msg = 'cart page';
+
+	//qq.loadModule({id:"mmCart"});
+	debugger;
+	qq.init({module:"mmCart"});
+	
+	qq.console(msg);
+})
 .add("account", function ()
 {
 	var msg = 'account';

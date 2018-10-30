@@ -1,7 +1,7 @@
 /**
 The MIT License (MIT)
 
-Copyright (c) <2013> <Arseniy Tomkevich, Nikita Tomkevich, Petr Tomkevich at XSENIO Inc. http://www.xsenio.com>
+Copyright (c) <2013> <Arseniy Tomkevich at XSENIO Inc. http://www.xsenio.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -64,7 +64,17 @@ catch(e)
 			_isNode = true;
 			root = this;
 
-			module.exports = qq;
+			module.exports = function (qqref)
+			{
+				if(qqref != null)
+				{
+					qq = qqref;
+				}
+
+				registerIntUtil(qq);
+				
+				return qq;
+			};
 		}
 		else
 		{
@@ -75,55 +85,64 @@ catch(e)
 	catch(e)
 	{}
 
-	/*  */
-	if(qq.encryption == null)
+	function registerIntUtil(qq)
 	{
-		qq.encryption = {};
+		/*  */
+		if(qq.encryption == null)
+		{
+			qq.encryption = {};
+		}
+		
+		qq.encryption.IntUtil = (function()
+		{
+			var hexChars = "0123456789abcdef";
+			
+			return {
+				
+				rol: function(x, n)
+				{
+					return ( x << n ) | ( x >>> ( 32 - n ) );
+				},
+				
+				ror: function(x, n)
+				{
+					var nn = 32 - n;
+					
+					return ( x << nn ) | ( x >>> ( 32 - nn ) );
+				},
+				
+				toHex: function(n, bigEndian)
+				{
+					var s = "";
+					
+					if(bigEndian)
+					{
+						for(var i = 0; i < 4; i++ )
+						{
+							s += hexChars.charAt( ( n >> ( ( 3 - i ) * 8 + 4 ) ) & 0xF ) 
+								+ hexChars.charAt( ( n >> ( ( 3 - i ) * 8 ) ) & 0xF );
+						}
+					}
+					else
+					{
+						for(var x = 0; x < 4; x++ )
+						{
+							s += hexChars.charAt( ( n >> ( x * 8 + 4 ) ) & 0xF )
+								+ hexChars.charAt( ( n >> ( x * 8 ) ) & 0xF );
+						}
+					}
+					
+					return s;
+				}
+			};
+			
+		}());
+
+	};
+
+	if(_isNode == false)
+	{
+		registerIntUtil(qq);
 	}
-	 
-	qq.encryption.IntUtil = (function()
-	{
-		var hexChars = "0123456789abcdef";
-		
-		return {
-			
-			rol: function(x, n)
-			{
-				return ( x << n ) | ( x >>> ( 32 - n ) );
-			},
-			
-			ror: function(x, n)
-			{
-				var nn = 32 - n;
-				
-				return ( x << nn ) | ( x >>> ( 32 - nn ) );
-			},
-			
-			toHex: function(n, bigEndian)
-			{
-				var s = "";
-				
-				if(bigEndian)
-				{
-					for(var i = 0; i < 4; i++ )
-					{
-						s += hexChars.charAt( ( n >> ( ( 3 - i ) * 8 + 4 ) ) & 0xF ) 
-							+ hexChars.charAt( ( n >> ( ( 3 - i ) * 8 ) ) & 0xF );
-					}
-				}
-				else
-				{
-					for(var x = 0; x < 4; x++ )
-					{
-						s += hexChars.charAt( ( n >> ( x * 8 + 4 ) ) & 0xF )
-							+ hexChars.charAt( ( n >> ( x * 8 ) ) & 0xF );
-					}
-				}
-				
-				return s;
-			}
-		};
-		
-	}());
 
 }).apply(this, [qq]);

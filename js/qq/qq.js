@@ -77,7 +77,6 @@ catch(e)
 		{
 			_isNode = true;
 			root = this;
-			console.log("* root", this);
 		}
 		else
 		{
@@ -229,18 +228,26 @@ catch(e)
 	*/
 	var XMLtoString = function(ref)
 	{
+		//debugger;
 		var str = null;
-		
-		try
+
+		if(_isNode)
 		{
-			var oSerializer = new XMLSerializer();
-			str = oSerializer.serializeToString(ref);
+			str = ref.toString();
 		}
-		catch (e)
+		else
 		{
-			if(window.ActiveXObject)
+			try
 			{
-				str = ref.xml;
+				var oSerializer = new XMLSerializer();
+				str = oSerializer.serializeToString(ref);
+			}
+			catch (e)
+			{
+				if(window.ActiveXObject)
+				{
+					str = ref.xml;
+				}
 			}
 		}
 		
@@ -495,10 +502,11 @@ catch(e)
 		    	{
 		    		if(_isNode == true)
 			    	{
-			    		if(qq.res != null)
-			    		{
-			    			qq.res.write(str);
-			    		}
+			    		// if(qq.res != null)
+			    		// {
+			    		// 	qq.res.write(str);
+			    		// }
+			    		console.log(str);
 			    	}
 			    	else
 			    	{
@@ -590,7 +598,15 @@ catch(e)
 		
 				STATEHANDLERS = {absolute:{}, relative:{}},
 				CURRSTATE,
-				CONFIG = {},
+				
+				CONFIG = {}, /* application configuration */
+
+				/* static object contains configuration for static paths that directly map into configuration object,
+				* while configuration in dynamic holds paths that require evaluation every time */
+				ACCESSCFG = {static:{}, dynamic:[]}, /* access application configuration */
+				READCFG = {static:{}, dynamic:[]}, /* configuration of how items are read, have defaults etc */
+				CACHECFG = {static:{}, dynamic:[]}, /* configuration for application cache behavior */
+
 				CONTAINER,
 				CONTAINERINNER,
 				containerType,
@@ -611,6 +627,7 @@ catch(e)
 		*/
 		var appendToContainer = function (ref)
 		{
+			debugger;
 			if(CONTAINERINNER != null && CONTAINERINNER.append)
 			{
 				CONTAINERINNER.append(ref);
@@ -625,32 +642,33 @@ catch(e)
 			}
 		};
 		
+		/*
+		* Dispatches an 'app.state' event when all the modules are loaded for a given QQ instance.
+		*/
 		var handleALLModulesLoaded = function ()
 		{
-			//$(window).trigger('hashchange');
-	
 			var evt = new qq.Event("app.state");
-	
-	        //evt.module = ;
-	        //evt.action = symbol;
-	
-	        //state.instrBySymbol[symbol] = instrUid;
+			
 	        if(initialArgs != null)
 	        {
 	        	evt.args = initialArgs;
-	
+				
 	        	initialArgs = null;
 	        }
-	
-	        qq.ed.dispatchEvent(evt);
 			
+			console.log("qq.init: (5) before app.state.");
+	        qq.ed.dispatchEvent(evt);
+	        console.log("qq.init: (6) after app.state.");
 		};
 		
+		/**
+		* Gets executed when module finished loading both script & view assets .
+		*/
 		var handleModuleLoaded = function (id, pObj)
 		{
 			var mod = pObj[id],
-					counter = 0,
-					cfg = MODULES[id];
+				counter = 0,
+				cfg = MODULES[id];
 			
 			delete(pObj[id]);
 			
@@ -666,196 +684,110 @@ catch(e)
 				handleALLModulesLoaded();
 			}
 		};
-		
-		/**
-		* Processes all the modules - ie loads their controllers and views.
-		*/
-		var processModules = function ()
-		{
-			var cfg, mid, typeOfPathContrl, pathControllers = CONFIG.controllers, typeOfPathViews, pathViews = CONFIG.views, strPathViews, strPathControllers, spath, delDone, delFail, cname, vname,
-					nodeName,
-					pObj = {};
-			
-			if(pathControllers == null)
+
+		var pmhandlers = {onFailController: function(mID, jqxhr, settings, err)
 			{
-				pathControllers = "";
-			}
-			
-			if(pathViews == null)
-			{
-				pathViews = "";
-			}
-	
-			typeOfPathViews = typeof(pathViews);
-			typeOfPathContrl = typeof(pathControllers);
-			
-			for(var each in MODULES)
-			{
-				cfg = MODULES[each];
+				//var mID = arguments.callee.id;
+
+				//debugger;
 				
-				cfg.viewLoaded = false;
-				cfg.controllerLoaded = false;
-				
-				mid = cfg.config.id;
-				
-				pObj[mid] = cfg;
-				
-				/** LOAD CONTROLLER **/
-				
-				if(cfg.config.controller != null && cfg.config.controller.length > 0)
+				if(settings == "parsererror")
 				{
-					cname = cfg.config.controller;
+					console.log("qq.processModules: Error parsing the MODULE controller [id:" + mID + "]. Check your code for javascript errors such as missing comma etc. [", err.message, "]");
+				}
+			},
+			onDoneController: function(mID, pObj, script, textStatus)
+			{
+				var cfg = MODULES[mID];
+				
+				cfg.script = script;
+				
+				if(cfg.registered != true)
+				{
+					throw new qq.Error("Controller for the module (id:" + mID + ") didn't register properly.");
 				}
 				else
 				{
-					cname = mid;
+					cfg.controllerLoaded = true;
 				}
 				
-				if(cfg.config.view != null && cfg.config.view.length > 0)
+				/* DUPLICATE The following code snippet is a duplicate of the code BELLOW in the next delDone */
+				if(cfg.viewLoaded == true && cfg.controllerLoaded == true)
 				{
-					vname = cfg.config.view;
+					handleModuleLoaded(mID, pObj);
 				}
-				else
-				{
-					vname = mid;
-				}
-	
-				if(typeOfPathContrl == "function")
-				{
-					strPathControllers = pathControllers();
-				}
-				else
-				{
-					strPathControllers = pathControllers;
-				}
+			},
+			onDoneView: function (mID, pObj, data)
+			{
+				console.log("* DATA ", data);
+
+				//var mID = arguments.callee.id,
+				var	cfg = MODULES[mID];
+				//debugger;
 				
-				spath = strPathControllers + cname + ".js";
-				
-				/* handle controller load failure */
-				delFail = function(jqxhr, settings, err)
+				cfg.viewLoaded = true;
+				cfg.viewDoc = data;
+
+				if(cfg.viewDoc != null && cfg.viewDoc.firstChild != null)
 				{
-					var mID = arguments.callee.id;
-					
-					if(settings == "parsererror")
+					var nodeName;
+
+					if(_isNode)
 					{
-						console.log("qq.processModules: Error parsing the MODULE controller [id:" + mID + "]. Check your code for javascript errors such as missing comma etc. [", err.message, "]");
-					}
-				};
-				
-				delFail.id = each;
-				
-				/* handle controller load success */
-				delDone = function(script, textStatus)
-				{
-					var mID = arguments.callee.id,
-							cfg = MODULES[mID];
-					
-					cfg.script = script;
-					
-					if(cfg.registered != true)
-					{
-						throw new qq.Error("Controller for the module (id:" + mID + ") didn't register properly.");
+						nodeName = cfg.viewDoc.firstChild.name.toLowerCase();
 					}
 					else
 					{
-						cfg.controllerLoaded = true;
-					}
-					
-					/* DUPLICATE The following code snippet is a duplicate of the code BELLOW in the next delDone */
-					if(cfg.viewLoaded == true && cfg.controllerLoaded == true)
-					{
-						/*var fn = cfg.ref.init(cfg.uid);
-						
-						if(fn != null && typeof(fn) == "function")
-						{
-							cfg.resHandler = fn;
-						}*/
-						
-						handleModuleLoaded(mID, pObj);
-					}
-				};
-				
-				delDone.id = each;
-	
-				var options = {
-					cache: true,
-					dataType: 'script',
-					processData: false,
-					url: spath
-				};
-				
-				options.success = delDone;
-				options.error = delFail;
-				
-				try
-				{
-					$.ajax(options);
-				}
-				catch(e)
-				{
-					throw new qq.Error("Error loading script. " + e);
-				}
-	
-				//jquery.binarytransport.js
-				
-				//$.getScript(spath).done(delDone).fail(delFail);
-				
-				/** LOAD VIEW XML */
-	
-				if(typeOfPathViews == "function")
-				{
-					strPathViews = pathViews();
-				}
-				else
-				{
-					strPathViews = pathViews;
-				}
-	
-				spath = strPathViews + vname + ".xml";;
-				
-				
-				/* DUPLICATE The following code snippet is a duplicate of the code ABOVE in the delDone */
-				delDone = function (data)
-				{
-					console.log("* DATA ", data);
-	
-					var mID = arguments.callee.id,
-							cfg = MODULES[mID];
-					
-					cfg.viewLoaded = true;
-					cfg.viewDoc = data;
-					
-					if(cfg.viewDoc != null && cfg.viewDoc.firstChild != null)
-					{
+						/* running in browser */
 						nodeName = cfg.viewDoc.firstChild.nodeName.toLowerCase();
+					}
+					
+					var childNodes, i, l, xmlNode;
+					
+					if(nodeName == "view")
+					{
+						childNodes = cfg.viewDoc.firstChild.childNodes;
 						
-						var childNodes, i, l, xmlNode;
-						
-						if(nodeName == "view")
+						for(i = 0, l = childNodes.length; i < l; i++)
 						{
-							childNodes = cfg.viewDoc.firstChild.childNodes;
+							xmlNode = childNodes[i];
 							
-							for(i = 0, l = childNodes.length; i < l; i++)
+							if(xmlNode.nodeType == 1)
 							{
-								xmlNode = childNodes[i];
-								
-								if(xmlNode.nodeType == 1)
-								{
-									cfg.viewNode = xmlNode;
-									break;
-								}
+								cfg.viewNode = xmlNode;
+								break;
 							}
 						}
-						else if(nodeName == "data")
+					}
+					else if(nodeName == "data")
+					{
+						childNodes = cfg.viewDoc.firstChild.childNodes;
+						
+						for(i = 0, l = childNodes.length; i < l; i++)
 						{
-							childNodes = cfg.viewDoc.firstChild.childNodes;
+							xmlNode = childNodes[i];
 							
-							for(i = 0, l = childNodes.length; i < l; i++)
+							if(xmlNode.nodeType == 1)
 							{
-								xmlNode = childNodes[i];
-								
-								if(xmlNode.nodeType == 1)
+								if(_isNode)
 								{
+									if(xmlNode.name == "view")
+									{
+										cfg.viewNode = xmlNode;
+									}
+									else if(xmlNode.name == "templates")
+									{
+										/*if(cfg.templates == null)
+										{
+											cfg.templates = {};
+										}
+										
+										cfg.templates[xmlNode.nodeName] = xmlNode;*/
+									}
+								}
+								else
+								{
+									/* running in browser */
 									if(xmlNode.nodeName == "view")
 									{
 										cfg.viewNode = xmlNode;
@@ -870,75 +802,314 @@ catch(e)
 										cfg.templates[xmlNode.nodeName] = xmlNode;*/
 									}
 								}
+
+								
 							}
 						}
-						
-						if(cfg.viewNode == null)
-						{
-							throw new qq.Error("Couldn't find the view data for the module (id:" + mID + "), it maybe empty.");
-						}
-					}
-					else
-					{
-						throw new qq.Error("View document for the module (id:" + mID + ") must contain the root 'view' node.");
 					}
 					
-					if(cfg.viewLoaded == true && cfg.controllerLoaded == true)
+					if(cfg.viewNode == null)
 					{
-						/*var fn = cfg.ref.init(cfg.uid);
-						
-						if(fn != null && typeof(fn) == "function")
-						{
-							cfg.resHandler = fn;
-						}*/
-						
-						handleModuleLoaded(mID, pObj);
+						throw new qq.Error("Couldn't find the view data for the module (id:" + mID + "), it maybe empty.");
 					}
-				};
-				
-				delDone.id = each;
-				
-				delFail = function (jqxhr, settings, err)
+				}
+				else
 				{
-					var mID = arguments.callee.id;
+					throw new qq.Error("View document for the module (id:" + mID + ") must contain the root 'view' node.");
+				}
+				
+				if(cfg.viewLoaded == true && cfg.controllerLoaded == true)
+				{
+					/*var fn = cfg.ref.init(cfg.uid);
 					
-					try
+					if(fn != null && typeof(fn) == "function")
 					{
-						console.log("Error loading the MODULE view [id:" + mID + "]", err.message);
-					} catch(e){}
-				};
+						cfg.resHandler = fn;
+					}*/
+					
+					handleModuleLoaded(mID, pObj);
+				}
+
+			},
+			onFailView: function (mID, jqxhr, settings, err)
+			{
+				//var mID = arguments.callee.id;
+
+				//debugger;
 				
-				delFail.id = each;
+				try
+				{
+					console.log("Error loading the MODULE view [id:" + mID + "]", err.message);
+				}
+				catch(e)
+				{
+
+				}
+			}};
+		
+		/**
+		* Processes all the modules - ie loads their controllers and views.
+		*/
+		var processModules = function ()
+		{
+			/* set all the references for this function */
+			var cfg, 
+				mid, 
+				typeOfPathContrl, 
+				pathControllers = CONFIG.controllers, 
+				typeOfPathViews, 
+				pathViews = CONFIG.views, 
+				strPathViews, 
+				strPathControllers, 
+				spath, 
+				delDone, 
+				delFail, 
+				cname, 
+				vname,
+				nodeName,
+				pObj = {},
+				options;
+			
+			if(pathControllers == null)
+			{
+				pathControllers = "";
+			}
+			
+			if(pathViews == null)
+			{
+				pathViews = "";
+			}
+	
+			typeOfPathViews = typeof(pathViews);
+			typeOfPathContrl = typeof(pathControllers);
+
+
+			/**
+			 * In the asynchronous execution order we need to generate 'pObj' before executing success callbacks
+			 * As its used to execute 'all modules loaded' callback.
+			 */
+			for(var each in MODULES)
+			{
+				cfg = MODULES[each];
 				
-				//var jqxhr = $.get(spath, delDone); //.fail(delFail);
-	
-				//jqxhr.fail(delFail);
-	
+				mid = cfg.config.id;
+				
+				pObj[mid] = cfg;
+			}
+			
+			/* go through all the registered modules */
+			for(var each in MODULES)
+			{
+				cfg = MODULES[each];
+				
+				cfg.viewLoaded = false;
+				cfg.controllerLoaded = false;
+				
+				mid = cfg.config.id;
+				
+				//pObj[mid] = cfg;
+				
+				/** LOAD CONTROLLER **/
+				
+				/* get controller name from config or module uid */
+				if(cfg.config.controller != null && cfg.config.controller.length > 0)
+				{
+					cname = cfg.config.controller;
+				}
+				else
+				{
+					cname = mid;
+				}
+				
+				/* get view name or use module uid */
+				if(cfg.config.view != null && cfg.config.view.length > 0)
+				{
+					vname = cfg.config.view;
+				}
+				else
+				{
+					vname = mid;
+				}
+				
+				//jquery.binarytransport.js
+				
+				//$.getScript(spath).done(delDone).fail(delFail);
+				
+				/** LOAD VIEW XML */
+				/* get path view string */
+				if(typeOfPathViews == "function")
+				{
+					strPathViews = pathViews();
+				}
+				else
+				{
+					strPathViews = pathViews;
+				}
+				
+				/* Path to View XML */
+				spath = strPathViews + vname + ".xml";;
+				
+				
+				/* setup callback delegates */
+
+				/* DUPLICATE The following code snippet is a duplicate of the code ABOVE in the delDone */
+				delDone = qq.delegate.create(this, pmhandlers.onDoneView, each, pObj);
+				//delDone.id = each;
+				
+				delFail = qq.delegate.create(this, pmhandlers.onFailView, each);
+				//delFail.id = each;
+				
+				/* setup options for xml / html view request */
 				options = {
 					dataType: 'xml',
 					processData: false,
 					url: spath
 				};
 				
+				/* assign callbacks to xml / html document reading */
 				options.success = delDone;
 				options.error = delFail;
 				
-				$.ajax(options);
-	
-				// $.ajax({
-				//   url: "https://fiddle.jshell.net/favicon.png",
-				//   beforeSend: function( xhr )
-				//   {
-				//     xhr.overrideMimeType( "text/plain; charset=x-user-defined" );
-				//   }
-				// })
-				//   .done(function( data )
-				//   {
-				//     if(console && console.log)
-				//     {
-				//     	console.log( "Sample of data:", data.slice( 0, 100 ) );
-				//     }
-			 //  	});
+				/* TODO make file loading asynchronous via promises etc */
+				if(_isNode)
+				{
+					if(qq.fs.existsSync(spath))
+					{
+						var xmlContent = qq.fs.readFileSync(spath, 'utf8');
+
+						try
+						{
+							//process XML into a document and pass it into the success function
+							var xmlTree = qq.$.load(xmlContent, {
+								    xml: {
+								      normalizeWhitespace: true,
+								    }
+								});
+
+							var xmlDocument = xmlTree();
+
+							if(xmlDocument != null && xmlDocument.children != null)
+							{
+								var nodeChildren = xmlDocument.children();
+
+								if(nodeChildren != null && nodeChildren[0] != null)
+								{
+									var rootNode = nodeChildren[0];
+
+									try
+									{
+										options.success(rootNode);
+									}
+									catch(e)
+									{
+										console.error("qq : Error executing 'onDone' for XML spath = " + spath + "\n" + e);
+									}
+								}
+							}
+						}
+						catch(e)
+						{
+							options.error();
+						}
+					}
+				}
+				else
+				{
+					try
+					{
+						$.ajax(options);
+					}
+					catch(e)
+					{
+						throw new qq.Error("Error loading XML document. " + e);
+					}
+				}
+
+
+				/* get path to controllers */
+				if(typeOfPathContrl == "function")
+				{
+					strPathControllers = pathControllers();
+				}
+				else
+				{
+					strPathControllers = pathControllers;
+				}
+				
+				/* make script path */
+				spath = strPathControllers + cname + ".js";
+				
+				/* setup script callbacks */
+
+				/* handle controller load failure */
+				delFail = qq.delegate.create(this, pmhandlers.onFailController, each);
+				//delFail.id = each;
+				
+				/* handle controller load success */
+				delDone = qq.delegate.create(this, pmhandlers.onDoneController, each, pObj);
+				//delDone.id = each;
+				
+				/* setup the options for file retrival request */
+				options = {
+					cache: true,
+					dataType: 'script',
+					processData: false,
+					url: spath
+				};
+				
+				/* assign callback methods into the options object */
+				options.success = delDone;
+				options.error = delFail;
+				
+				/* finally initiate loading */
+				/* TODO here is where we should make loading asynchronous. Also the execution should happen upon asynchronous load. Setup execution time out based on user role or w/e. */
+				if(_isNode)
+				{
+					//console.log("load script", spath);
+					//console.log("from ", __dirname);
+					if(qq.fs.existsSync(spath))
+					{
+						var jsCode = qq.fs.readFileSync(spath, 'utf8');
+
+						const vm = new qq.vm({
+						    timeout: 6000000,
+						    sandbox: {qq: qq}
+						});
+
+						try
+						{
+							var res = vm.run(jsCode);
+
+							try
+							{
+								options.success(jsCode, res);
+							}
+							catch(e)
+							{
+								console.error("qq : Error executing 'onDone' for controller spath = " + spath + "\n" + e);
+							}
+
+							console.log("vm result : ", res);
+						}
+						catch(e)
+						{
+							options.error();
+						}
+					}
+				}
+				else
+				{
+					try
+					{
+						$.ajax(options);
+					}
+					catch(e)
+					{
+						throw new qq.Error("Error loading script. " + e);
+					}
+				}
+
+
 			}
 		};
 		
@@ -955,6 +1126,7 @@ catch(e)
 				}
 				else
 				{
+					/* setup the module configuration in MODULES. This is used when the module is loaded and is registered with QQ. */
 					MODULES[config.id] = {registered:false, config:config};
 				}
 			}
@@ -968,7 +1140,7 @@ catch(e)
 			if(MODULES[id] != null)
 			{
 				var cfg = MODULES[id],
-						ref;
+					ref;
 				
 				cfg.registered = true;
 				cfg.config;
@@ -1048,6 +1220,9 @@ catch(e)
 		
 		/** INIT **/
 		
+		/**
+		* Sets up application state change handler.
+		*/
 		var setupAppStateChangeHandler = function ()
 		{
 			var eMMAppState = qq.Delegate.create({}, function (evt)
@@ -1058,6 +1233,8 @@ catch(e)
 	
 	          if(evt.args != null)
 	          {
+	          	//debugger;
+	          	//qq;
 	          	processStateRequest(evt.args);
 	
 	          	CURRSTATE = evt.args;
@@ -1068,7 +1245,7 @@ catch(e)
 			qq.ed.addEvent("app.state", eMMAppState);
 	
 	
-			// $(window).bind('hashchange', function(e)
+			// qq.$(window).bind('hashchange', function(e)
 			// {
 			// 	console.log("* document.URL", document.URL);
 			// 	console.log("hashchange", arguments);
@@ -1125,6 +1302,7 @@ catch(e)
 				total++;
 			}
 			
+			/* sort a, b, d, g */
 			arr.sort();
 			
 			names = arr.join('|');
@@ -1175,7 +1353,7 @@ catch(e)
 			/* process relative state handlers */
 			
 			var relative = STATEHANDLERS.relative,
-							i = 0, l, fn, bopts, goodopts;
+				i = 0, l, fn, bopts, goodopts;
 			
 			for(var each in relative)
 			{
@@ -1236,10 +1414,15 @@ catch(e)
 			
 		};
 		
-		/* executes response handler method for the module and passes in the request arguments, but saves the request argument for later when module loaded. */
+		/**
+		* Executes response handler method for the module and passes in the request arguments, but saves the request & arguments for later when module loads.
+		* - checks if the module in state request loaded its view and controller
+		* - focuses the module in view by generating its contents
+		*/
 		var processStateRequest = function (args)
 		{
 			console.group("* process state request");
+
 			/* module ID */
 				var mid = args.module, 
 			/* action ID */
@@ -1297,7 +1480,6 @@ catch(e)
 							
 							/* save args is a previously saved args - we might have used args to execute oninit */
 							args = saveArgs;
-							console.log("3 args", args);
 							
 							/* execute a response handler with the arguments */
 							if(cfg.resHandler != null)
@@ -1424,6 +1606,24 @@ catch(e)
 		var hideModule = function (mid)
 		{
 			var cfg = MODULES[mid];
+
+			cfg.view.css("display", "none");
+
+			//args: Proxy {mapToName: true, mainView: "main"}
+			//config: {id: "mmCart"}
+			//controllerLoaded: true
+			//ref: qq.Module
+			//registered: true
+			//resHandler: ƒ ()
+			//script: 
+			//uid:
+			//view: Node
+			//viewDoc: XML Node
+			//viewLoaded: boolean
+			//viewNode: 
+			//viewString
+			//viewUID
+			//viewWrapper:
 			
 			if(containerType == "bs:carousel")
 			{
@@ -1438,8 +1638,11 @@ catch(e)
 		var showModule = function (mid)
 		{
 			var cfg = MODULES[mid];
-	
-			console.log("Show Module", cfg);
+			
+			console.log("qq.init: (5-d1) show module.");
+
+			/* cfg.view is a real time Node, so any changes to it affect the view */
+			cfg.view.css("display", "block");
 			
 			if(containerType == "bs:carousel")
 			{
@@ -1462,40 +1665,67 @@ catch(e)
 			
 		};
 		
+		/**
+		* Focuses module in view. Adds the module view node into the container.
+		* - converts the view into XML string
+		* - adds view XML string into the container
+		* - 
+		*/
 		var focusModuleInView = function (mid)
 		{
 			var lastCfg = MODULES[lastModule],
-					cfg = MODULES[mid], vcfg;
+				cfg = MODULES[mid], vcfg;
 			
 			if(lastCfg != null)
 			{
+				debugger;
+				console.log("qq.init: (5-a) hide previous module.");
 				// hide the module depending on its configuration
 				hideModule(lastModule);
 			}
-	
-			
+
+			debugger;
 			/* if the view doesn't exist then */
 			/* create & insert the view html into the DOM */
 			if(cfg.view == null)
 			{
 				if(cfg.viewNode != null)
 				{
+					/* generate the view string out of the module's view node */
 					if(cfg.viewString == null)
 					{
-						cfg.viewString = XMLtoString($(cfg.viewNode).clone()[0]);
+						console.log("qq.init: (5-b) get view string from node tree.");
+						if(_isNode)
+						{
+							cfg.viewString = XMLtoString(qq.$(cfg.viewNode));
+						}
+						else
+						{
+							cfg.viewString = XMLtoString(qq.$(cfg.viewNode).clone()[0]);
+						}
 					}
 					
+					/* add view string to container */
 					if(cfg.viewString != null)
 					{
+						console.log("qq.init: (5-c) add view string to container.");
 						vcfg = addToContainer(cfg.viewString);
 						
+						/* content is a node of the view */
 						cfg.view = vcfg.content;
+
+						/* uid is also the .id attribute */
 						cfg.viewUID = vcfg.uid;
+
+						/* view wrapper node */
 						cfg.viewWrapper = vcfg.wrapper;
 						
-						/* initialize the module prior to showing it, assign the resHandler if a function was returned from the 'init' method. */
-						console.log("* initialize the module prior to showing it", cfg, cfg.ref);
+						/* initialize the module prior to showing it, assign the 'resHandler' if a function was returned from the 'init' method. */
 						
+						//console.log("* initialize the module prior to showing it", cfg, cfg.ref);
+						
+						/* ref is the module reference */
+						debugger;
 						if(cfg.ref.init != null)
 						{
 							var fn = cfg.ref.init(cfg.uid, cfg.args, cfg.viewWrapper);
@@ -1522,12 +1752,12 @@ catch(e)
 		var addToContainer = function (str)
 		{
 			var uid = "qq" + UIDGen.generate(),
-					content = $(str),
-					wrapper;
+				content = qq.$(str),
+				wrapper;
 			
 			if(containerType == "bs:carousel")
 			{
-				wrapper = $('<div id="' + uid + '" class="item"></div>');
+				wrapper = qq.$('<div id="' + uid + '" class="item"></div>');
 				
 				wrapper.append(content);
 				
@@ -1535,7 +1765,7 @@ catch(e)
 			}
 			else
 			{
-				wrapper = $('<div id="' + uid + '"></div>');
+				wrapper = qq.$('<div id="' + uid + '"></div>');
 				
 				wrapper.append(content);
 				
@@ -1641,27 +1871,27 @@ catch(e)
 		/* TODO not sure if we nedd this */
 		var initBootstrap = function(sel)
 		{
-			var arr = $(sel + " .carousel"), i = 0, l = arr.length;
+			var arr = qq.$(sel + " .carousel"), i = 0, l = arr.length;
 			
 			for(; i < l; i++)
 			{
-				$(arr[i]).carousel({
+				qq.$(arr[i]).carousel({
 	          pause: true,
 	          interval: false
 	      });
 			}
 			
-			var arr = $(sel + " .btn");
+			var arr = qq.$(sel + " .btn");
 			
 			for(i = 0, l = arr.length; i < l; i++)
 			{
-				$(arr[i]).button();
+				qq.$(arr[i]).button();
 			}
 		};
 		
 		var initialArgs;
 
-		var processConfigHandlers = function()
+		var executeConfigHandlers = function()
 		{
 			var arr = CONFIG["~fns~"],
 				fn;
@@ -1992,17 +2222,35 @@ catch(e)
 			};
 
 		}).apply({});
+
+		/**
+		* Checks if an object is a qq.$ node. Also acts as another function when nothing is passed into it, as a way to tell if we are running in a nodeJS environment.
+		*/
+		var isNode = function(obj)
+		{
+			if(obj == null)
+			{
+				return _isNode;
+			}
+			else
+			{
+				return obj.name || obj.type === 'text' || obj.type === 'comment';
+			}
+		};
 		
 		/**
 		* Initialize QQ
+		* - setup main container reference
+		* - execute config handlers
+		* - sets up state change handlers
+		* - processes the modules ie loads view & controller assets
 		*/
 		var init = function (args)
 		{
-			console.log("%c qq.init", "color: white; background: green; padding: 3px;");
 			if(bInited != true)
 			{
 				initialArgs = args;
-	
+				
 				if(qq.UIDGenerator == null)
 				{
 					throw new qq.Error("qq.init: UIDGenerator didn't load.");
@@ -2011,40 +2259,79 @@ catch(e)
 				{
 					UIDGen = new qq.UIDGenerator();
 				}
-				
-				CONTAINER = qq$(CONFIG.container);
-				
-				if(CONTAINER.length > 0)
+
+				//debugger;
+
+				/* Here is where we find the app container in the application 'document' */
+				if(_isNode)
 				{
-					var classList = CONTAINER[0].className.split(/\s+/),
-						classDict = {};
-					
-					for (var i = 0; i < classList.length; i++)
+					/* this should search for the container in a global document */
+					CONTAINER = qq.document.find(CONFIG.container);
+
+					if(CONTAINER.length > 0)
 					{
-						classDict[classList[i]] = true;
+						console.log("qq.init: (1) setup container reference.")
 					}
-					
-					if(classDict.carousel == true)
+				}
+				else
+				{
+					CONTAINER = qq.$(CONFIG.container);
+
+					/* If we find a container reference */
+					if(CONTAINER.length > 0)
 					{
-						containerType = "bs:carousel";
-						
-						CONTAINERINNER = CONTAINER.find(".carousel-inner");
-						
-						CONTAINER.carousel({pause:true, interval:false});
+						CONTAINER = qq.$(CONFIG.container);
+						/* class list is currently only being used by non-node environments */
+						var classList = CONTAINER[0].className.split(/\s+/);
+
+						var classDict = {};
+
+						for(var i = 0; i < classList.length; i++)
+						{
+							classDict[classList[i]] = true;
+						}
+
+						if(classDict.carousel == true)
+						{
+							containerType = "bs:carousel";
+							
+							CONTAINERINNER = CONTAINER.find(".carousel-inner");
+							
+							CONTAINER.carousel({pause:true, interval:false});
+						}
 					}
 				}
 				
 				REGISTRY = new qq.Registry();
+				
+				/* process ie execute on config registered handlers - execute the callbacks */
+				executeConfigHandlers();
+				console.log("qq.init: (2) execute config handlers.");
 
-				processConfigHandlers();
-				
-				processModules.call(this);
-				
+				/* register the state change handler for the entire qq environment */
 				setupAppStateChangeHandler();
+				console.log("qq.init: (3) setup state change handlers.");
+				
+				/* load views and controllers (html/xml & javacript files) of all the modules */
+				processModules.call(this);
+				console.log("qq.init: (4) loaded view and controller assets.");
 
 				bInited = true;
+			}
+			else
+			{
+				//args;
 
-
+				var evt = new qq.Event("app.state");
+				
+		        if(args != null)
+		        {
+		        	evt.args = args;
+					
+		        	args = null;
+		        }
+				
+				qq.ed.dispatchEvent(evt);
 			}
 		}; /* end init qq */
 		
@@ -2075,7 +2362,37 @@ catch(e)
 				}
 			}
 		};
-		
+
+		/**
+		* Configures application access
+		*/
+		var configureAccess = function (pattern, cfg)
+		{
+			var _static = ACCESSCFG.static,
+				_dynamic = ACCESSCFG.dynamic;
+
+			/* access pattern could be a regular expression */
+			if(pattern instanceof RegExp)
+            {
+                _dynamic.push(pattern);
+            }
+            else if(typeof(pattern) == "string")
+            {
+            	_static[pattern] = cfg;
+
+            	//console.log("configureAccess static", pattern, _static, cfg)
+            }
+		};
+
+		/* returns the application access configuration */
+		var configureAccessGet = function ()
+		{
+			//console.log("ACCESSCFG", qq.dump(ACCESSCFG))
+			return ACCESSCFG;
+		};
+
+		configureAccess.get = configureAccessGet;
+
 		/*** ERROR CLASS ***/
 		
 		var errr = function (message)
@@ -2150,9 +2467,13 @@ catch(e)
 					Error: errr.bind(scope),
 					Node: QQNode.bind(scope),
 					node: QQNode.bind(scope),
+					isNode: isNode.bind(scope)//,
 
-					$: qq$
+					//$: qq$
 				};
+
+		qqRef.configure.access = configureAccess;
+		//console.log("configure", qqRef.configure.access)
 
 		var fnQQRef = function ()
 		{

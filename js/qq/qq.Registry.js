@@ -1,7 +1,7 @@
 /**
 The MIT License (MIT)
 
-Copyright (c) <2013> <Arseniy Tomkevich, Nikita Tomkevich, Petr Tomkevich at XSENIO Inc. http://www.xsenio.com>
+Copyright (c) <2013> <Arseniy Tomkevich at XSENIO Inc. http://www.xsenio.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -21,6 +21,8 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
+
+console.log("- injected qq.Registry.js");
 
 try
 {
@@ -64,7 +66,17 @@ catch(e)
 			_isNode = true;
 			root = this;
 
-			module.exports = qq;
+			module.exports = function (qqref)
+			{
+				if(qqref != null)
+				{
+					qq = qqref;
+				}
+
+				createRegistry(qq);
+				
+				return qq;
+			};
 		}
 		else
 		{
@@ -75,296 +87,313 @@ catch(e)
 	catch(e)
 	{}
 
-	qq.RegistryValue = function(value, name, consty)
+	function createRegistry(qq)
 	{
-		this.value = value;
-		this.name = name;
-		
-		if(consty != null)
+		/**
+		* QQ Value object
+		*/
+		qq.Value = function(data, uid, immutable)
 		{
-			this.consty = consty;
-		}
-		else
-		{
-			this.consty = false;
-		}
-	}
-
-	qq.RegistryValue.prototype = {};
-
-
-	qq.Registry = function()
-	{
-		var RegistryValue = qq.RegistryValue;
-		
-		var DATA = new Object(),
-				BINDINGS = new Object(),
-				counter = 0;
-		
-		/** binds a property within the registry to another property or function delegate
-		 * @name property name
-		 * @to object reference where the 'property' is located
-		 * @property name in the 'to' object reference.
-		 */
-		this.bindTo = function(name, to, property)
-		{
-			var reg;
-			
-			if(BINDINGS[name] == null)
+			/* figure out if the value will be a constant / immutable */
+			if(immutable != null)
 			{
-				reg = BINDINGS[name] = new Registry();
+				this.immutable = immutable;
 			}
 			else
 			{
-				reg = BINDINGS[name];
+				this.immutable = false;
 			}
-			
-			return reg.register(new RegistryValue({ref:to, property:property}));
-		};
-		
-		this.unbindTo = function(name, id)
-		{
-			var reg = BINDINGS[name];
-			
-			return reg.remove(id);
-		};
-		
-		// TODO make setting a little more flexible - support name, value signature
-		// sets a variable within the registry
-		// process all the bindings
-		// specify whether variable is a consty
-		// returns a key
+
+			this.uid = uid;
+			this.value = data;
+		}
+		qq.Value.prototype = {};
+
+
 		/**
-		 * @val returns unique identifier for the value.
-		 * @name,val uses 'name' as unique identifier.
-		 * @name,val,const uses 'name' as unique identifier and makes the 'value' constant, doesn't allow overwrite.
-		 */
-		this.set = function()
+		* Bindable registry.
+		*/
+		qq.Registry = function()
 		{
-			var val,
-				name,
-				value,
-				val2,
-				consty;
+			var DATA = new Object(),
+				BINDINGS = new Object(),
+				uidcounter = 0;
 			
-			if(arguments.length >= 2)
+			/** 
+			 * Binds an item under 'uid' to a 'property' in another object.
+			 * @uid unique property identifier
+			 * @scope a property object
+			 * @property a property name in the 'scope' object
+			 */
+			var bind = function(uid, scope, property)
 			{
-				name = arguments[0];
-				val = arguments[1];
+				var reg = BINDINGS[uid];
 				
-				if(arguments.length == 3)
+				if(reg == null)
 				{
-					consty = arguments[2];
-					
-					if(consty !== false || consty !== true)
-					{
-						consty = false;
-					}
-				}
-				else
-				{
-					consty = false;
+					reg = BINDINGS[uid] = new qq.Registry();
 				}
 				
-				if(DATA[name] == null)
+				return reg.register(new qq.Value({scope:scope, property:property}));
+			};
+			this.bind = bind;
+			
+			/**
+			 * Unbinds an item under 'uid' property.
+			 * @uid unique property identifier
+			 * @id registration id that was returned by 'bind' method
+			 */
+			var unbind = function(uid, id)
+			{
+				var reg = BINDINGS[uid];
+				
+				return reg.remove(id);
+			};
+			this.unbind = unbind;
+			
+
+			/**
+			 * Sets a registry value & returns unique identifier for the value.
+			 * @val returns unique identifier for the value.
+			 * @uid, val uses 'uid' as unique identifier.
+			 * @uid, val, const uses 'uid' as unique identifier and makes the 'value' constant, doesn't allow overwrite.
+			 */
+			var set = function()
+			{
+				var uid, /* property uid to set */
+					val, /* value */
+					vobj, /* value object token that holds the value and other configuration */
+					immutable; /* indicates if the property registered is immutable */
+				
+				/* set a registry's value if its mutable */
+				if(arguments.length >= 2)
 				{
-					value = new RegistryValue(val, name, consty);
+					uid = arguments[0];
+					val = arguments[1];
 					
-					DATA[name] = value;
-				}
-				else
-				{
-					value = DATA[name];
-					
-					if(value.consty)
+					if(arguments.length == 3)
 					{
-						return null;
-					}
-					else
-					{
-						value = new RegistryValue(val, name, consty);
+						immutable = arguments[2];
 						
-						DATA[name] = value;
-					}
-				}
-			}
-			else if(arguments.length == 1 && (arguments[0] instanceof RegistryValue))
-			{
-				value = arguments[0];
-				
-				if(value.name != null)
-				{
-					DATA[value.name] = value;
-				}
-				else
-				{
-					DATA[counter] = value;
-					
-					value.name = "" + counter;
-					
-					counter++;
-				}
-			}
-			else if(arguments.length == 1)
-			{
-				value = new RegistryValue(arguments[0]);
-				
-				DATA[counter] = value;
-					
-				value.name = "" + counter;
-				
-				counter++;
-			}
-			
-			var reg = BINDINGS[value.name],
-				regValue;
-			
-			if(reg != null)
-			{
-				var data = reg.getData(),
-					ref,
-					prop,
-					rref;
-				
-				for(var each in data)
-				{
-					regValue = data[each];
-					
-					ref = regValue.value.ref;
-					prop = regValue.value.property;
-					
-					if(ref instanceof Registry)
-					{
-						rref = ref;
-						rref.register(prop, value.value);
+						if(immutable !== false || immutable !== true)
+						{
+							immutable = false;
+						}
 					}
 					else
 					{
-						if(ref[prop] instanceof Function)
+						immutable = false;
+					}
+					
+					if(DATA[uid] == null)
+					{
+						vobj = new qq.Value(val, uid, immutable);
+						
+						DATA[uid] = vobj;
+					}
+					else
+					{
+						vobj = DATA[uid];
+						
+						if(vobj.immutable)
+						{
+							return null;
+						}
+						else
+						{
+							vobj = new qq.Value(val, uid, immutable);
+							
+							DATA[uid] = vobj;
+						}
+					}
+				}
+				else if(arguments.length == 1)
+				{
+					if(arguments[0] instanceof qq.Value)
+					{
+						vobj = arguments[0];
+						
+						if(vobj.uid != null)
+						{
+							DATA[vobj.uid] = vobj;
+						}
+						else
+						{
+							DATA[uidcounter] = vobj;
+						}
+					}
+					else
+					{
+						vobj = new qq.Value(arguments[0]);
+					
+						DATA[uidcounter] = vobj;
+					}
+
+					vobj.uid = uidcounter + '';
+
+					uidcounter++;
+				}
+
+				/* PROCESS the BINDINGS */
+				
+				processBinding(vobj);
+				
+				return vobj.uid;
+			};
+			this.set = set;
+
+			/**
+			 * Processes all the bindings for a given value.
+			 */
+			var processBinding = function (vobj)
+			{
+				/* registry of value object uid */
+				var reg = BINDINGS[vobj.uid], 
+					rval; /* registry value object */
+
+				if(reg != null)
+				{
+					/* value object scope */
+					var scope,
+						prop, /* object scope property */
+						rref;
+					
+					var data = reg.getData();
+
+					for(var each in data)
+					{
+						rval = data[each];
+						
+						scope = rval.value.scope;
+						prop = rval.value.property;
+						
+						/* process a registry binding  */
+						if(scope instanceof qq.Registry)
+						{
+							rref = scope;
+							rref.register(prop, vobj.value);
+						}
+						/* process a callback binding */
+						else if(scope[prop] instanceof Function)
 						{
 							try
 							{
-								ref[prop].apply(ref, [value.value]);
+								scope[prop].apply(scope, [vobj.value]);
 							}
 							catch(e)
 							{
-								throw new qq.Error("Registry", "sets", "There was an error processing binding for name = " + value.name + ".\n" + e);
+								throw new qq.Error("qq.Registry", "set", "callback in binding for uid = " + vobj.uid + " threw an error.\n" + e);
 							}
 						}
 						else
 						{
-							ref[prop] = value.value;
+							/* process regular object binding */
+							scope[prop] = vobj.value;
 						}
 					}
-				}
-			}
+
+				} /* end processing bindings */
+			};
 			
-			return value.name;
-		};
-		
-		this.reloadBinding = function()
-		{
-			var value, reg, regValue,
-				data, ref, rref, prop, each;
-			
-			for(var eachName in BINDINGS)
+			/**
+			* Pushes all the data into associated bindings.
+			*/
+			var push = function()
 			{
-				value = DATA[eachName];
+				var value, 
+					reg, 
+					regValue,
+					data, 
+					scope, 
+					rref, 
+					prop, 
+					each;
 				
-				if(value == null) continue;
-				
-				reg = BINDINGS[eachName];
-				
-				if(reg != null)
+				for(var uid in BINDINGS)
 				{
-					data = reg.getData();
+					value = DATA[uid];
 					
-					for(each in data)
-					{
-						regValue = data[each];
-						
-						ref = regValue.value.ref;
-						prop = regValue.value.property;
-						
-						if(ref instanceof Registry)
-						{
-							rref = ref;
-							rref.register(prop, value.value);
-						}
-						else
-						{
-							if(ref[prop] instanceof Function)
-							{
-								try
-								{
-									ref[prop].apply(ref, [value.value]);
-								}
-								catch(e)
-								{
-									throw new qq.Error("Registry", "reloadBinding", "There was an error processing binding for name = " + value.name + ".\n" + e);
-								}
-							}
-							else
-							{
-								ref[prop] = value.value;
-							}
-						}
-					}
+					if(value == null) continue;
+
+					processBinding(value);
 				}
-			}
-		};
-		
-		this.getData = function()
-		{
-			return DATA;
-		};
-		
-		/**
-		 * Removes a value registered under a 'name'.
-		 */
-		this.remove = function(name)
-		{
-			if(DATA[name] != null)
+			};
+			this.push = push;
+			
+			/**
+			* Returns the registry data object.
+			*/
+			var data = function()
 			{
-				var value = DATA[name];
-				
-				if(value.consty)
+				return DATA;
+			};
+			this.data = data;
+			
+			/**
+			 * Removes a value registered under a 'uid'.
+			 */
+			var remove = function(uid)
+			{
+				if(DATA[uid] != null)
+				{
+					var value = DATA[uid];
+					
+					if(value.immutable)
+					{
+						return false;
+					}
+					
+					DATA[uid] = null;
+					
+					delete(DATA[uid]);
+					
+					return true;
+				}
+				else
 				{
 					return false;
 				}
-				
-				DATA[name] = null;
-				
-				delete(DATA[name]);
-				
-				return true;
-			}
-			else
+			};
+			this.remove = remove;
+			
+			/**
+			* Resets the registry.
+			*/
+			var reset = function(bindingToo)
 			{
-				return false;
-			}
-		};
-		
-		this.reset = function()
-		{
-			DATA = new Object();
-			counter = 0;
-		};
-		
-		// gets a variable from the registry
-		this.get = function(name)
-		{
-			if(DATA[name] != null)
-			{
-				return DATA[name].value;
-			}
-			else
-			{
-				return null;
-			}
-		};
-	};
+				DATA = new Object();
+				uidcounter = 0;
 
-	qq.Registry.prototype = {};
+				if(bindingToo === true)
+				{
+					BINDINGS = new Object();
+				}
+			};
+			this.reset = reset;
+			
+			/**
+			 * Retrieves a value under the 'uid'
+			 */
+			var get = function(uid)
+			{
+				if(DATA[uid] != null)
+				{
+					return DATA[uid].value;
+				}
+				else
+				{
+					return null;
+				}
+			};
+			this.get = get;
+		};
+
+		qq.Registry.prototype = {};
+	}
+
+	if(_isNode == false)
+	{
+		createRegistry(qq);
+	}
 
 }).apply(this, [qq]);

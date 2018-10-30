@@ -95,57 +95,47 @@ THE SOFTWARE.
 		/* this isn't a 'var' ie not local - otherwise causes a bug */
 		qq = require('./qq.js');
 
-		var IntUtil = require('./encryption/IntUtil.js');
-		var MD5 = require('./encryption/MD5.js');
+		var IntUtil = require('./encryption/IntUtil.js')(qq);
+		var MD5 = require('./encryption/MD5.js')(qq);
 
-		var UIDGenerator = require('./qq.UIDGenerator.js');
-		var Registry = require('./qq.Registry.js');
-		var Delegate = require('./qq.Delegate.js');
-		var Router = require('./qq.Router.js');
-		var EventDispatcher = require('./qq.EventDispatcher.js');
-		var Loader = require('./qq.Loader.js');
+		var UIDGenerator = require('./qq.UIDGenerator.js')(qq);
+		var Registry = require('./qq.Registry.js')(qq);
+		var Delegate = require('./qq.Delegate.js')(qq);
+		var Router = require('./qq.Router.js')(qq);
+		var EventDispatcher = require('./qq.EventDispatcher.js')(qq);
+		var Loader = require('./qq.Loader.js')(qq);
+
+		var Module = require('./qq.Module.js')(qq);
+
+		var View = require('./qq.View.js')(qq);
+
+		/* include widget framework */
+		var widgets = require('./qq.widgets.js')(qq);
+		var widgetList = require('./qq.widgets.list.js')(qq);
 
 		/* merge all the included concepts into one qq object */
-		Object.assign(qq, IntUtil);
-		//console.log("IntUtil : qq " + dump(qq));
+		// Object.assign(qq, IntUtil);
 		
-		Object.assign(qq, MD5);
-		//console.log("MD5 : qq " + dump(qq));
+		// Object.assign(qq, MD5);
 
-		Object.assign(qq, UIDGenerator);
-		//console.log("UIDGenerator : qq " + dump(qq));
+		// Object.assign(qq, UIDGenerator);
 		
-		Object.assign(qq, Registry);
-		//console.log("Registry : qq " + dump(qq));
+		// Object.assign(qq, Registry);
 		
-		Object.assign(qq, Delegate);
-		//console.log("Delegate : qq " + dump(qq));
+		// Object.assign(qq, Delegate);
 		
-		Object.assign(qq, Router);
-		//console.log("Router : qq " + dump(qq));
+		// Object.assign(qq, Router);
 		
-		Object.assign(qq, EventDispatcher);
+		// Object.assign(qq, EventDispatcher);
 
-		Object.assign(qq, Loader);
-		//console.log("EventDispatcher : qq " + dump(qq));
+		// Object.assign(qq, Loader);
 
-		//console.log("sr : qq " + dump(qq));
+		// Object.assign(qq, Module);
 
-		//js/qq/qq.module.js
-		//js/qq/qq.view.js
-		//js/qq/qq.widgets.js
-		//js/qq/qq.widgets.list.js
-		
-		//encryption/MD5.js
-		// hover.js
-		// hQuery.js
-		// js/axios.min.js
-		// lodash.min.js
-		// bezier.js
-		// RobinHood-ES5.js
+		// Object.assign(qq, View);
 
-		// MaidMarianActions.js
-		// contentscript.js
+		// Object.assign(qq, widgets);
+		// Object.assign(qq, widgetList);
 	};
 
 	/* processes the config.json */
@@ -178,6 +168,8 @@ THE SOFTWARE.
 		for(var each in data.access)
 		{
 			accessToken = data.access[each];
+
+			qq.configure.access(each, accessToken);
 		}
 
 		for(var each in data.read)
@@ -219,9 +211,8 @@ THE SOFTWARE.
 					/* module */
 					if(typeof(mitem) == "object" && mitem.id != null)
 					{
+						/* passes an object {id:"mmOrders"} */
 						qq.loadModule(mitem);
-
-						//{id:"mmOrders"}
 					}
 					else if(typeof(mitem) == "string")
 					{
@@ -230,9 +221,94 @@ THE SOFTWARE.
 				}
 			}
 
-			if(data.app.main != null)
+			if(data.app.main != null && data.app.main.length > 0)
 			{
-				qq.loader.load(data.app.main);
+				var mainHTML = fs.readFileSync(data.app.main, 'utf8'); //fs.readFileSync(filePath , 'utf8');
+
+				var htmlDoc = cheerio.load(mainHTML);
+				//debugger;
+				/* setup the global qq.document property */
+				if(htmlDoc != null && htmlDoc.root != null)
+				{
+					qq.document = htmlDoc.root();
+				}
+
+				/* setup the global link to cheerio */
+				qq.$ = cheerio;
+
+				//debugger;
+				var fnCopyToFrom = function (deep, target, obj)
+				{
+					if(deep != true)
+					{
+						obj = target;
+						target = deep;
+
+						deep = false;
+					}
+
+					if(deep)
+					{
+						/* two phases to synchronize w deep copy, first we do all the objects, then copy the non objects. */
+						for(var each in obj)
+						{
+							if(typeof(obj[each]) == "object")
+							{
+								//if(typeof(target[each]) == "object")
+								//{
+									if(target[each] == null)
+									{
+										target[each] = {};
+									}
+
+									fnCopyToFrom(true, target[each], obj[each]);
+								//}
+							}
+							else
+							{
+								target[each] = obj[each];
+							}
+						}
+					}
+					else
+					{
+						for(var each in obj)
+						{
+							target[each] = obj[each];
+						}
+					}
+				};
+
+				/* add extend method to $ to make it more like jquery */
+				qq.$.extend = function ()
+				{
+					var target, index, deep;
+
+					if(arguments[0] === true)
+					{
+						target = arguments[1];
+						index = 2;
+						deep = true;
+					}
+					else
+					{
+						target = arguments[0];
+						index = 1;
+						deep = false;
+					}
+
+					if(target != null)
+					{
+						var args = [];
+
+						for(var i = index, l = arguments.length; i < l; i++)
+						{
+							fnCopyToFrom(deep, target, arguments[i]);
+						}
+
+						return target;
+					}
+				};
 			}
 		}
 
@@ -257,11 +333,94 @@ THE SOFTWARE.
 		setupRequirements();
 
 		/* set the console to manual flush */
-		qq.console.flush(false);
+		//qq.console.flush(false);
 
 		var http = require('http'),
 			path = require('path'),
-			fs = require("fs");
+			fs = require("fs"),
+			cheerio = require('cheerio'),
+			jsVM = require('vm2').VM;
+
+		/* these are only available in nodeJS version */
+		qq.fs = fs;
+		qq.vm = jsVM;
+
+		/**
+		* A method which handles access rights checking, checks if the fragment represents a valid content path or query.
+		* The method stops the request or takes over handling it by returning true or false, letting the qq.Router whether to proceed or not.
+		*/
+		var handleAccessRights = function (fragment)
+		{
+			var accessCfg = qq.configure.access.get();
+
+			//qq.console("fragment x", fragment);
+
+			var frags = fragment.split("\/");
+
+			if(frags.length > 1)
+			{
+				/* path without the file name */
+				var path = frags.slice(0, frags.length - 1).join("/");
+				var filename = frags[frags.length - 1];
+				var fileFrags = filename.split(".");
+
+				var fileExtension = fileFrags[fileFrags.length - 1];
+
+				//qq.console("path x", qq.dump(accessCfg));
+
+				if(accessCfg.static[path] != null)
+				{
+					var rights = accessCfg.static[path];
+
+					var content = null, mimeType;
+
+					/* if file path exists, read from it and out put into the response */
+					if(fs.existsSync(path) == true)
+					{
+						/* access rights are valid */
+						if(rights === true)
+						{
+							content = fs.readFileSync(fragment, 'utf8');
+						}
+						/* here we handle a custom rights object */
+						else if(rights != null)
+						{
+							content = fs.readFileSync(fragment, 'utf8');
+						}
+
+						if(content != null)
+						{
+							/* figure out the mime type for the file if we did mention it */
+							mimeType = mimeTypes["." + fileExtension];
+
+							if(mimeType != null)
+							{
+								qq.res.writeHead(200, {'Content-Type': mimeType});
+							}
+							else
+							{
+								// no mime type found - write a default mime type?
+							}
+
+							qq.res.write(content);
+						}
+					}
+
+					return false;
+				}
+				else
+				{
+					return true;
+				}
+			}
+
+			return true;
+
+			//qq.console("accessCfg", qq.dump(accessCfg));
+		};
+
+		/* connect / link the router with a method that validates access rights and lets the qq.Router either proceed with a registered router method or takes over the request instead. */
+		qq.rr.link(handleAccessRights);
 
 		//var extname = String(path.extname(filePath)).toLowerCase();
 		//var contentType = mimeTypes[extname] || 'application/octet-stream';
@@ -275,17 +434,29 @@ THE SOFTWARE.
 			
 			qq.res = res;
 
-			qq.rr.init(req.url);
+			if(qq.rr.init(req.url))
+			{
+				/* manually flush the console */
+				qq.console.flush();
+
+				debugger;
+				/* output the html into the browser */
+				res.write(qq.document.html());
+				
+				/* remove the response object reference from qq */
+				res.end();
+				qq.res = null;
+			}
+			else
+			{
+				res.end();
+				// router didn't validate the url, or perhaps the execution was taken over by another manager linked to the router
+			}
 
 			/* initialize qq if it hasn't already been initialized */
 			//qq.init();
 			
-			/* manually flush the console */
-			qq.console.flush();
 			
-			/* remove the response object reference from qq */
-			res.end();
-			qq.res = null;
 		};
 
 		/* CONFIGURE QQ */

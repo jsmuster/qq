@@ -64,7 +64,17 @@ catch(e)
 			_isNode = true;
 			root = this;
 
-			module.exports = qq;
+			module.exports = function (qqref)
+			{
+				if(qqref != null)
+				{
+					qq = qqref;
+				}
+
+				registerUIDGenerator(qq);
+				
+				return qq;
+			};
 		}
 		else
 		{
@@ -75,84 +85,86 @@ catch(e)
 	catch(e)
 	{}
 
-	var MD5;
-
-	if(_isNode)
+	function registerUIDGenerator(qq)
 	{
-		_qq = require('./encryption/MD5.js');
+		var MD5;
 		
-		MD5 = _qq.encryption.MD5;
-	}
-	else
-	{
-		MD5 = qq.encryption.MD5;
-	}
-	
-
-	/**
-	* The UID Generator generates uid keys.
-	*/
-	qq.UIDGenerator = function()
-	{
+		if(_isNode)
+		{
+			
+			//var _qq = require('./encryption/MD5.js');
+			
+			MD5 = qq.encryption.MD5;
+		}
+		else
+		{
+			MD5 = qq.encryption.MD5;
+		}
 		/**
-		 * Get random string.
-		 */
-		var strs = new Object(),
+		* The UID Generator generates uid keys.
+		*/
+		qq.UIDGenerator = function()
+		{
+			/**
+			 * Get random string.
+			 */
+			var strs = new Object(),
 				uids = new Object();
-		
-		function completeString(arg1, strlen)
-		{
-			var str = null,
-					tempStr = null,
-					i = 0,
-					l = 0;
 			
-			str = arg1.toString();
-			
-			if(str.length == strlen)
+			function completeString(arg1, strlen)
 			{
-				return str;
-			}
-			
-			tempStr = "";
-			i = 0;
-			l = str.length;
-			
-			while(i < (strlen - l))
-			{
-				tempStr = tempStr + "0";
-				i += 1;
-			}
-			
-			tempStr = tempStr + str;
-			
-			return tempStr;
-		}
-		
-		function getRandomStr()
-		{
-			var randomStr = completeString(Math.round(Math.random() * 100000000000000000), 17);
-			
-			if(strs[randomStr] !== true)
-			{
-				strs[randomStr] = true;
+				var str = null,
+						tempStr = null,
+						i = 0,
+						l = 0;
 				
-				return randomStr;
+				str = arg1.toString();
+				
+				if(str.length == strlen)
+				{
+					return str;
+				}
+				
+				tempStr = "";
+				i = 0;
+				l = str.length;
+				
+				while(i < (strlen - l))
+				{
+					tempStr = tempStr + "0";
+					i += 1;
+				}
+				
+				tempStr = tempStr + str;
+				
+				return tempStr;
 			}
-			else
+			
+			function getRandomStr()
 			{
-				return getRandomStr();
+				var randomStr = completeString(Math.round(Math.random() * 100000000000000000), 17);
+				
+				if(strs[randomStr] !== true)
+				{
+					strs[randomStr] = true;
+					
+					return randomStr;
+				}
+				else
+				{
+					return getRandomStr();
+				}
 			}
-		}
-		
-		this.has = function (uid)
-		{
-			return (uids[uid] === true);
-		};
-		
-		this.generate = function()
-		{
-			var l1 = new Date(),
+			
+			var has = function (uid)
+			{
+				return (uids[uid] === true);
+			};
+			this.has = has;
+			
+			var generate = function()
+			{
+				var l1 = new Date(),
 					l2 = null,
 					year = completeString(l1.getFullYear(), 4),
 					month = completeString(l1.getMonth(), 2),
@@ -164,15 +176,23 @@ catch(e)
 					miliseconds = completeString(l1.getMilliseconds(), 3),
 					randomStr = getRandomStr(),
 					uid;
-			
-			l2 = year + month + date + day + hours + minutes + seconds + miliseconds + randomStr;
-			
-			uid = MD5.hash(l2);
-			
-			uids[uid] = true;
-			
-			return uid;
+				
+				l2 = year + month + date + day + hours + minutes + seconds + miliseconds + randomStr;
+				//console.log("hash", MD5.hash)
+				uid = MD5.hash(l2);
+				
+				uids[uid] = true;
+				
+				return uid;
+			};
+
+			this.generate = generate;
 		};
 	};
+
+	if(_isNode === false)
+	{
+		registerUIDGenerator(qq);
+	}
 
 }).apply(this, [qq]);

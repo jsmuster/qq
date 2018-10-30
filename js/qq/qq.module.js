@@ -64,7 +64,17 @@ catch(e)
 			_isNode = true;
 			root = this;
 
-			module.exports = qq;
+			module.exports = function (qqref)
+			{
+				if(qqref != null)
+				{
+					qq = qqref;
+				}
+
+				registerModule(qq);
+				
+				return qq;
+			};
 		}
 		else
 		{
@@ -75,21 +85,43 @@ catch(e)
 	catch(e)
 	{}
 
-	qq.Module = function (id, uid, WIDGETS, GROUPS)
+	function registerModule(qq)
 	{
-		if(uid == null || !(uid.length > 0))
-		{
-			throw new qq.Error("qq.Module: invalid module uid (uid:" + uid + ").");
-		}
+		// var UIDGenerator;
+		// var Registry;
+		// var View;
 		
-		/*
-			cfg.ref;
-			cfg.qsel;
-			cfg.uid;
-			cfg.dom
+		// if(_isNode)
+		// {
+		// 	UIDGenerator = require('./qq.UIDGenerator.js').UIDGenerator;
+		// 	Registry = require('./qq.Registry.js').Registry;
+		// 	View = require('./qq.View.js').View;
+		// }
+		// else
+		// {
+		// 	UIDGenerator = qq.UIDGenerator;
+		// 	Registry = qq.Registry;
+		// 	View = qq.View;
+		// }
+
+		/**
+		* WIDGETS & GROUPS are passed into qq.Module upon creation.
 		*/
-		
-		var VIEWS = {},
+		qq.Module = function (id, uid, WIDGETS, GROUPS)
+		{
+			if(uid == null || !(uid.length > 0))
+			{
+				throw new qq.Error("qq.Module: invalid module uid (uid:" + uid + ").");
+			}
+			
+			/*
+				cfg.ref;
+				cfg.qsel;
+				cfg.uid;
+				cfg.dom
+			*/
+			var VIEWS = {},
+				HANDLERS = {},
 				lastView,
 				SERVICES = {},
 				SELECTOR = {},
@@ -107,285 +139,299 @@ catch(e)
 				GROUPS = GROUPS,
 				
 				REGISTRY = new qq.Registry();
-		
-		this.registry = function ()
-		{
-			return REGISTRY;
-		};
-		
-		/**** VIEWS ****/
-		
-		this.registerView = function (id, qsel)
-		{
-			if(id != null && id.length > 0)
+			
+			this.registry = function ()
 			{
-				if(VIEWS[id] != null)
+				return REGISTRY;
+			};
+			
+			/**** VIEWS ****/
+			
+			this.registerView = function (id, qsel)
+			{
+				if(id != null && id.length > 0)
 				{
-					throw new qq.Error("View configuration under (id:" + id + ") is already registered.");
+					if(VIEWS[id] != null)
+					{
+						throw new qq.Error("View configuration under (id:" + id + ") is already registered.");
+					}
+					else
+					{
+						var cfg = {},
+								uid = UIDGen.generate();
+						
+						var viewRef = new qq.View(modID, id, uid, this, WIDGETS, GROUPS);
+						
+						cfg.ref = viewRef;
+						cfg.qsel = qsel;
+						cfg.uid = uid;
+						cfg.id = id;
+						cfg.mid = modID;
+						
+						VIEWS[id] = cfg;
+						
+						return cfg.ref;
+					}
 				}
 				else
 				{
-					var cfg = {},
-							uid = UIDGen.generate();
-					
-					var viewRef = new qq.View(modID, id, uid, this, WIDGETS, GROUPS);
-					
-					cfg.ref = viewRef;
-					cfg.qsel = qsel;
-					cfg.uid = uid;
-					cfg.id = id;
-					cfg.mid = modID;
-					
-					VIEWS[id] = cfg;
-					
-					return cfg.ref;
+					throw new qq.Error("Invalid view id - (id:" + id + ").");
 				}
-			}
-			else
+			};
+			
+			this.setView = function (id)
 			{
-				throw new qq.Error("Invalid view id - (id:" + id + ").");
-			}
-		};
-		
-		this.setView = function (id)
-		{
-			if(id != null && id.length > 0)
-			{
-				if(VIEWS[id] == null)
+				if(id != null && id.length > 0)
 				{
-					throw new qq.Error("qq.Module.setView: View configuration under (id:" + id + ") isn't registered.");
+					if(VIEWS[id] == null)
+					{
+						throw new qq.Error("qq.Module.setView: View configuration under (id:" + id + ") isn't registered.");
+					}
+					else
+					{
+						var cfg;
+						
+						if(lastView != null)
+						{
+							cfg = VIEWS[lastView];
+							
+							cfg.ref.on("pre.hide");
+
+							cfg.dom.css("visibility", "hidden");
+
+							cfg.ref.on("post.hide");
+						}
+						
+						cfg = VIEWS[id];
+
+						console.log("* setView", cfg, id);
+
+						//cfg.ref.on();
+						
+						//cfg.qsel;
+
+						cfg.ref.on("pre.show");
+
+						//cfg.uid;
+						//cfg.dom.show();
+						cfg.dom.css("visibility", "visible");
+
+						// qq.view
+						cfg.ref.on("post.show");
+						
+						//cfg.ref.show();
+						
+						lastView = id;
+						
+						return cfg.ref;
+					}
 				}
 				else
 				{
+					throw new qq.Error("qq.Module.setView: Invalid view id - (id:" + id + ").");
+				}
+			};
+			
+			this.getView = function (id)
+			{
+				if(id != null && id.length > 0)
+				{
+					if(VIEWS[id] == null)
+					{
+						throw new qq.Error("qq.Module.getView: View configuration under (id:" + id + ") isn't registered.");
+					}
+					else
+					{
+						return VIEWS[id].ref;
+					}
+				}
+				else
+				{
+					throw new qq.Error("qq.Module.getView: Invalid view id - (id:" + id + ").");
+				}
+			};
+			
+			/**** SERVICE ****/
+			
+			this.registerService = function (type, cfg)
+			{
+				if(type != null && type.length > 0)
+				{
+					if(SERVICES[type] != null)
+					{
+						throw new qq.Error("Selector configuration under (id:" + id + ") is already registered.");
+					}
+					else
+					{
+						SERVICES[type] = cfg;
+					}
+				}
+				else
+				{
+					throw new qq.Error("Invalid service type - (type:" + type + ").");
+				}
+			};
+			
+			var processServices = function ()
+			{
+				var servs = this.services;
+				
+				if(servs != null)
+				{
+					for(var each in servs)
+					{
+						this.registerService(each, servs[each]);
+					}
+				}
+			};
+			
+			/**
+			* Registers a response handler to the module
+			*/
+			this.addResponseHandler = function (del)
+			{
+				handleREST = del;
+			};
+			
+			/**
+			* Configures a module and executes configure method for every qq.view
+			*/
+			this.configure = function (uid)
+			{
+				if(bConfigured != true)
+				{
+					if(modUID != uid)
+					{
+						throw new qq.Error("qq.Module.configure: Incorrect module uid (uid:" + uid + ") passed.");
+					}
+					
+					/* process all the module services */
+					processServices.call(this);
+					
 					var cfg;
 					
-					if(lastView != null)
+					for(var each in VIEWS)
 					{
-						cfg = VIEWS[lastView];
+						cfg = VIEWS[each];
 						
-						cfg.ref.on("pre.hide");
-
-						cfg.dom.hide();
-
-						cfg.ref.on("post.hide");
+						cfg.ref.on("pre.configure");
+						/* configure each module view */
+						cfg.ref.configure(cfg.uid);
+						
+						cfg.ref.on("post.configure");
 					}
 					
-					cfg = VIEWS[id];
-
-					console.log("* setView", cfg, id);
-
-					//cfg.ref.on();
-					
-					//cfg.qsel;
-
-					cfg.ref.on("pre.show");
-
-					//cfg.uid;
-					cfg.dom.show();
-
-					// qq.view
-					cfg.ref.on("post.show");
-					
-					//cfg.ref.show();
-					
-					lastView = id;
-					
-					return cfg.ref;
-				}
-			}
-			else
-			{
-				throw new qq.Error("qq.Module.setView: Invalid view id - (id:" + id + ").");
-			}
-		};
-		
-		this.getView = function (id)
-		{
-			if(id != null && id.length > 0)
-			{
-				if(VIEWS[id] == null)
-				{
-					throw new qq.Error("qq.Module.getView: View configuration under (id:" + id + ") isn't registered.");
+					bConfigured = true;
 				}
 				else
 				{
-					return VIEWS[id].ref;
+					return null;
 				}
-			}
-			else
-			{
-				throw new qq.Error("qq.Module.getView: Invalid view id - (id:" + id + ").");
-			}
-		};
-		
-		/**** SERVICE ****/
-		
-		this.registerService = function (type, cfg)
-		{
-			if(type != null && type.length > 0)
-			{
-				if(SERVICES[type] != null)
-				{
-					throw new qq.Error("Selector configuration under (id:" + id + ") is already registered.");
-				}
-				else
-				{
-					SERVICES[type] = cfg;
-				}
-			}
-			else
-			{
-				throw new qq.Error("Invalid service type - (type:" + type + ").");
-			}
-		};
-		
-		var processServices = function ()
-		{
-			var servs = this.services;
+			};
 			
-			if(servs != null)
+			this.init = function (uid, args, ref)
 			{
-				for(var each in servs)
+				debugger;
+
+				if(bInited != true)
 				{
-					this.registerService(each, servs[each]);
-				}
-			}
-		};
-		
-		/**
-		* Registers a response handler to the module
-		*/
-		this.addResponseHandler = function (del)
-		{
-			handleREST = del;
-		};
-		
-		/**
-		* Configures a module and executes configure method for every qq.view
-		*/
-		this.configure = function (uid)
-		{
-			if(bConfigured != true)
-			{
-				if(modUID != uid)
-				{
-					throw new qq.Error("qq.Module.configure: Incorrect module uid (uid:" + uid + ") passed.");
-				}
-				
-				/* process all the module services */
-				processServices.call(this);
-				
-				var cfg;
-				
-				for(var each in VIEWS)
-				{
-					cfg = VIEWS[each];
-					
-					cfg.ref.on("pre.configure");
-					/* configure each module view */
-					cfg.ref.configure(cfg.uid);
-					
-					cfg.ref.on("post.configure");
-				}
-				
-				bConfigured = true;
-			}
-			else
-			{
-				return null;
-			}
-		};
-		
-		this.init = function (uid, args, ref)
-		{
-			if(bInited != true)
-			{
-				if(modUID != uid)
-				{
-					throw new qq.Error("qq.Module.init: Incorrect module uid (uid:" + uid + ") passed.");
-				}
-				
-				var cfg, 
-					initHandlers;
-				
-				for(var each in VIEWS)
-				{
-					cfg = VIEWS[each];
-					
-					if(cfg.qsel != null && cfg.qsel.length > 0)
+					if(modUID != uid)
 					{
-						cfg.dom = ref.find(cfg.qsel);
+						throw new qq.Error("qq.Module.init: Incorrect module uid (uid:" + uid + ") passed.");
+					}
+					
+					var cfg, 
+						initHandlers;
+					
+					for(var each in VIEWS)
+					{
+						cfg = VIEWS[each];
 						
-						if(cfg.dom.length > 0)
+						if(cfg.qsel != null && cfg.qsel.length > 0)
 						{
-							cfg.dom.hide();
+							cfg.dom = ref.find(cfg.qsel);
+							
+							if(cfg.dom.length > 0)
+							{
+								//debugger;
+								cfg.dom.css("visibility", "hidden");
+								//style.
+								//cfg.dom.hide();
+							}
+						}
+						
+						cfg.ref.on("pre.init");
+						cfg.ref.init(cfg.uid, cfg.dom);
+						cfg.ref.on("post.init");
+					}
+					
+					if(VIEWS[args.mainView] != null)
+					{
+						this.setView(args.mainView);
+					}
+					else
+					{
+						throw new qq.Error("qq.Module.init: The main view specified doesn't exist in the view registry.");
+					}
+
+					initHandlers = HANDLERS["init"];
+
+					if(initHandlers != null && initHandlers.length > 0)
+					{
+						for(var i = 0, l = initHandlers.length, cb; i < l; i++)
+						{
+							cb = initHandlers[i];
+
+							try
+							{
+								cb();
+							}
+							catch(e)
+							{
+								throw new qq.Error("qq.Module.init", "One of the 'init' handlers has an error.");
+							}
 						}
 					}
 					
-					cfg.ref.on("pre.init");
-					cfg.ref.init(cfg.uid, cfg.dom);
-					cfg.ref.on("post.init");
-				}
-				
-				if(VIEWS[args.mainView] != null)
-				{
-					this.setView(args.mainView);
+					bInited = true;
+					
+					return handleREST;
 				}
 				else
 				{
-					throw new qq.Error("qq.Module.init: The main view specified doesn't exist in the view registry.");
+					return null;
 				}
+			};
 
-				initHandlers = HANDLERS["init"];
-
-				if(initHandlers != null && initHandlers.length > 0)
+			var on = function (type, del)
+			{
+				if(type != null && type.length > 0)
 				{
-					for(var i = 0, l = initHandlers.length, cb; i < l; i++)
+					if(HANDLERS[type] == null)
 					{
-						cb = initHandlers[i];
-
-						try
-						{
-							cb();
-						}
-						catch(e)
-						{
-							throw new qq.Error("qq.Module.init", "One of the 'init' handlers has an error.");
-						}
+						HANDLERS[type] = [];
 					}
-				}
-				
-				bInited = true;
-				
-				return handleREST;
-			}
-			else
-			{
-				return null;
-			}
-		};
 
-		this.on = function (type, del)
-		{
-			if(type != null && type.length > 0)
-			{
-				if(HANDLERS[type] == null)
+					var handlers = HANDLERS[type];
+
+					handlers.push(del);
+				}
+				else
 				{
-					HANDLERS[type] = [];
+					throw new qq.Error("Invalid event handler type - (type:" + type + "), mod id (id:" + modID + "), mod uid (uid:" + modUID + ").");
 				}
-
-				var handlers = HANDLERS[type];
-
-				handlers.push(del);
-			}
-			else
-			{
-				throw new qq.Error("Invalid event handler type - (type:" + type + "), mod id (id:" + modID + "), mod uid (uid:" + modUID + ").");
-			}
+			};
+			this.on = on;
+			
 		};
-		
+
+		qq.Module.prototype = {};
+
 	};
 
-	qq.Module.prototype = {};
+	if(_isNode == false)
+	{
+		registerModule(qq);
+	}
 	
 }).apply(this, [qq]);
