@@ -9,9 +9,9 @@ Main focus of QQ is quick application development and deployment.
 
 ## Architecture Overview
 
-An Isomorphic application is the combination of techniques in a server-rendered application and a single-page application. Apps built with the technique perform beautifully on any device.
+An Isomorphic application is the combination of techniques in a server-rendered application and a single-page application.
 
-Isomorphic apps employ a pattern that exploits almost all the features available, storing data locally and minimizing server requests. The apps render flawlessly, maximize SEO, and offer opportunities to share code and libraries between client and server.
+Isomorphic apps employ a pattern that exploits storing data locally and minimizing server requests. The apps render flawlessly, maximize SEO, and offer opportunities to share code and libraries between client and server.
 
 ## Quickstart
 
