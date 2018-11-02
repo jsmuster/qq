@@ -1,6 +1,6 @@
 {
-  "name": "qqjs-srcs",
-  "version": "1.0.0",
+  "name": "qq",
+  "version": "1.0.3",
   "private": true,
   "description": "QQ - a framework for building highly modular, maintainable applications quickly (qq).",
   "homepage": "https://github.com/jsmuster/qq#readme",
@@ -12,7 +12,7 @@
     "type": "git",
     "url": "https://github.com/jsmuster/qq.git"
   },
-  "main": "qq.js",
+  "main": "js/qq/qq.node.js",
   "scripts": {
     "start": "node server.js",
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -21,6 +21,9 @@
   "dependencies": {
     "cheerio": "^1.0.0-rc.2",
     "vm2": "^3.6.4"
+  },
+  "engines": {
+    "node": ">=8.12.0"
   },
   "keywords": [
     "client-side",
@@ -32,5 +35,5 @@
     "sdk",
     "devkit"
   ],
-  "author": "Arseniy Tomkevich"
+  "author": {"name": "Arseniy Tomkevich", "email":"jsmastery@gmail.com", "url": "https://medium.com/@jsmuster" }
 }
