@@ -111,7 +111,7 @@ catch(e)
 		{
 			if(uid == null || !(uid.length > 0))
 			{
-				throw new qq.Error("qq.Module: invalid module uid (uid:" + uid + ").");
+				throw new qq.Error("qq.Module", "constructor", "Invalid module uid (uid:" + uid + ").");
 			}
 			
 			/*
@@ -147,25 +147,34 @@ catch(e)
 			
 			/**** VIEWS ****/
 			
-			this.registerView = function (id, qsel)
+			var registerView = function (id, qsel)
 			{
 				if(id != null && id.length > 0)
 				{
 					if(VIEWS[id] != null)
 					{
-						throw new qq.Error("View configuration under (id:" + id + ") is already registered.");
+						throw new qq.Error("qq.Module", "registerView", "View configuration under (id:" + id + ") is already registered.");
 					}
 					else
 					{
 						var cfg = {},
-								uid = UIDGen.generate();
+							uid = UIDGen.generate();
 						
 						var viewRef = new qq.View(modID, id, uid, this, WIDGETS, GROUPS);
 						
+						/* qq.View reference */
 						cfg.ref = viewRef;
+						
+						/* view query selector */
 						cfg.qsel = qsel;
+						
+						/* newly generated uid */
 						cfg.uid = uid;
+						
+						/* view id */
 						cfg.id = id;
+
+						/* module id */
 						cfg.mid = modID;
 						
 						VIEWS[id] = cfg;
@@ -175,17 +184,18 @@ catch(e)
 				}
 				else
 				{
-					throw new qq.Error("Invalid view id - (id:" + id + ").");
+					throw new qq.Error('qq.Module', 'registerView', 'Invalid view id - (id:' + id + ').');
 				}
 			};
+			this.registerView = registerView;
 			
-			this.setView = function (id)
+			var setView = function (id)
 			{
 				if(id != null && id.length > 0)
 				{
 					if(VIEWS[id] == null)
 					{
-						throw new qq.Error("qq.Module.setView: View configuration under (id:" + id + ") isn't registered.");
+						throw new qq.Error('qq.Module','setView', 'View configuration under (id:' + id + ') isn\'t registered.');
 					}
 					else
 					{
@@ -231,8 +241,9 @@ catch(e)
 					throw new qq.Error("qq.Module.setView: Invalid view id - (id:" + id + ").");
 				}
 			};
+			this.setView = setView;
 			
-			this.getView = function (id)
+			var getView = function (id)
 			{
 				if(id != null && id.length > 0)
 				{
@@ -250,10 +261,11 @@ catch(e)
 					throw new qq.Error("qq.Module.getView: Invalid view id - (id:" + id + ").");
 				}
 			};
+			var getView = this.getView;
 			
 			/**** SERVICE ****/
 			
-			this.registerService = function (type, cfg)
+			var registerService = function (type, cfg)
 			{
 				if(type != null && type.length > 0)
 				{
@@ -271,6 +283,7 @@ catch(e)
 					throw new qq.Error("Invalid service type - (type:" + type + ").");
 				}
 			};
+			this.registerService = registerService;
 			
 			var processServices = function ()
 			{
@@ -288,15 +301,19 @@ catch(e)
 			/**
 			* Registers a response handler to the module
 			*/
-			this.addResponseHandler = function (del)
+			var addResponseHandler = function (del)
 			{
 				handleREST = del;
 			};
+			this.addResponseHandler = addResponseHandler;
 			
 			/**
-			* Configures a module and executes configure method for every qq.view
+			* Configures a module and executes configure method for every qq.view.
+			* The right module uid has to be passed into this method for it to execute properly.
+			* - registers all the services with the module
+			* - executes each view's configure life cycle events by also passing a view uid into a 'configure' event handler
 			*/
-			this.configure = function (uid)
+			var configure = function (uid)
 			{
 				if(bConfigured != true)
 				{
@@ -328,53 +345,59 @@ catch(e)
 					return null;
 				}
 			};
+			this.configure = configure;
 			
-			this.init = function (uid, args, ref)
+			/**
+			* Initialize a Module.
+			* @uid a module UID must be passed into the module to initialize it
+			* @args module's arguments
+			* @viewWrapper view wrapper node
+			*/
+			var init = function (uid, args, viewWrapper)
 			{
-				debugger;
-
 				if(bInited != true)
 				{
+					/* a module uid and provided uid must match for this method to execute */
 					if(modUID != uid)
 					{
-						throw new qq.Error("qq.Module.init: Incorrect module uid (uid:" + uid + ") passed.");
+						throw new qq.Error("qq.Module", "init", "Incorrect module uid (uid:" + uid + ") passed.");
 					}
 					
-					var cfg, 
-						initHandlers;
+					var cfgv, initHandlers;
 					
-					for(var each in VIEWS)
+					/* go through each of the views registered and find their view nodes in the dom */
+					for(var vuid in VIEWS)
 					{
-						cfg = VIEWS[each];
+						cfgv = VIEWS[vuid];
 						
-						if(cfg.qsel != null && cfg.qsel.length > 0)
+						if(cfgv.qsel != null && cfgv.qsel.length > 0)
 						{
-							cfg.dom = ref.find(cfg.qsel);
+							/* set the 'dom' property in a view configuration */
+							cfgv.dom = viewWrapper.find(cfgv.qsel);
 							
-							if(cfg.dom.length > 0)
+							if(cfgv.dom.length > 0)
 							{
-								//debugger;
-								cfg.dom.css("visibility", "hidden");
-								//style.
-								//cfg.dom.hide();
+								cfgv.dom.css("visibility", "hidden");
 							}
 						}
 						
-						cfg.ref.on("pre.init");
-						cfg.ref.init(cfg.uid, cfg.dom);
-						cfg.ref.on("post.init");
+						cfgv.ref.on("pre.init");
+						cfgv.ref.init(cfgv.uid, cfgv.dom);
+						cfgv.ref.on("post.init");
 					}
 					
+					/* if 'mainView' is part of the module configuration then set it */
 					if(VIEWS[args.mainView] != null)
 					{
 						this.setView(args.mainView);
 					}
 					else
 					{
-						throw new qq.Error("qq.Module.init: The main view specified doesn't exist in the view registry.");
+						throw new qq.Error("qq.Module", "init", "The main view specified doesn't exist in the view registry.");
 					}
 
-					initHandlers = HANDLERS["init"];
+					/* process init callback handlers */
+					configure = HANDLERS["init"];
 
 					if(initHandlers != null && initHandlers.length > 0)
 					{
@@ -402,7 +425,11 @@ catch(e)
 					return null;
 				}
 			};
+			this.init = init.bind(this);
 
+			/**
+			* Registers 'on' handlers to the module.
+			*/
 			var on = function (type, del)
 			{
 				if(type != null && type.length > 0)

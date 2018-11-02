@@ -357,61 +357,108 @@ THE SOFTWARE.
 
 			var frags = fragment.split("\/");
 
+			//debugger;
+
 			if(frags.length > 1)
 			{
+				var dirDelimiter = "/";
 				/* path without the file name */
-				var path = frags.slice(0, frags.length - 1).join("/");
-				var filename = frags[frags.length - 1];
-				var fileFrags = filename.split(".");
+				var fullpath = frags.slice(0, frags.length - 1).join(dirDelimiter);
+				
+				var filename = frags[frags.length - 1],
+					fileFrags = filename.split("."),
+					fileExtension = fileFrags[fileFrags.length - 1];
+					
+				var currPath = '', rights, content, mimeType, isValid = false, last = false;
 
-				var fileExtension = fileFrags[fileFrags.length - 1];
-
-				//qq.console("path x", qq.dump(accessCfg));
-
-				if(accessCfg.static[path] != null)
+				/* go through every frag in the path, so for 'assets/js/qq/encryption' check 'assets then 'assets/js' then 'assets/js/qq', and check against the rules in each. */
+				/* loops through the frag trying out the entire frag from the start so we can see if there are any sub folder rules */
+				for(var i = 0, l = frags.length - 1; i < l; i++)
 				{
-					var rights = accessCfg.static[path];
-
-					var content = null, mimeType;
-
-					/* if file path exists, read from it and out put into the response */
-					if(fs.existsSync(path) == true)
+					if(i == 0)
 					{
-						/* access rights are valid */
-						if(rights === true)
-						{
-							content = fs.readFileSync(fragment, 'utf8');
-						}
-						/* here we handle a custom rights object */
-						else if(rights != null)
-						{
-							content = fs.readFileSync(fragment, 'utf8');
-						}
+						currPath = frags[0];
+					}
+					else
+					{
+						currPath += dirDelimiter + frags[i];
 
-						if(content != null)
+						/* indicate its the last frag */
+						if(i == (l - 1))
 						{
-							/* figure out the mime type for the file if we did mention it */
-							mimeType = mimeTypes["." + fileExtension];
-
-							if(mimeType != null)
-							{
-								qq.res.writeHead(200, {'Content-Type': mimeType});
-							}
-							else
-							{
-								// no mime type found - write a default mime type?
-							}
-
-							qq.res.write(content);
+							last = true;
 						}
 					}
 
-					return false;
+					/* so the current path has the rights object, lets check it */
+					if(accessCfg.static[currPath] != null)
+					{
+						rights = accessCfg.static[currPath];
+
+						/* the rights equals 'true' */
+						if(rights === true)
+						{
+							/* if its the last frag then validate since rights are true */
+							if(last == true)
+							{
+								console.log("validated last frag, rights = true")
+								isValid = true;
+							}
+						}
+						/* rights should be a configuration object with a set of rules */
+						else if(typeof(rights) == 'object')
+						{
+							/* apply sub folders the same rights - a subfolders property was set to true */
+							if(rights.subfolders == true)
+							{
+								console.log("validated '"+currPath+"' path, subfolders = true")
+								isValid = true;
+							}
+						}
+
+						if(isValid == true)
+						{
+							/* if full file path exists, read from it and out put into the response */
+							if(fs.existsSync(fullpath) == true)
+							{
+								content = fs.readFileSync(fragment, 'utf8');
+
+								if(content != null)
+								{
+									/* figure out the mime type for the file if we did mention it */
+									mimeType = mimeTypes["." + fileExtension];
+
+									if(mimeType != null)
+									{
+										qq.res.writeHead(200, {'Content-Type': mimeType});
+									}
+									else
+									{
+										// no mime type found - write a default mime type?
+									}
+
+									qq.res.write(content);
+								}
+							}
+
+
+							return false;
+						}
+					}
 				}
-				else
-				{
-					return true;
-				}
+
+				//qq.console("path x", qq.dump(accessCfg));
+
+				// path
+				// "assets/js/qq/encryption"
+
+				// assets/js/qq: {subfolders: true}
+
+
+				// else
+				// {
+				// 	return true;
+				// }
 			}
 
 			return true;

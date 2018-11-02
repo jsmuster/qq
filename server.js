@@ -39,71 +39,73 @@ var style = "color: black; background-color: pink; font-weight: bold; font-size:
 /* configure qq */
 
 
+var appRouter = require('./app.js')(qq);
+
 //console.log("QQ  ", JSON.stringify(qq));
 
 // adding routes
-var appRouter = qq.rr.add(/stocks\/(.*)/, function()
-{
-	var msg = 'stock page xxxx';
+// var appRouter = qq.rr.add(/stocks\/(.*)/, function()
+// {
+// 	var msg = 'stock page xxxx';
 
-    qq.console(msg);
-})
-.add(function()
-{
-	var msg = 'main page';
+//     qq.console(msg);
+// })
+// .add(function()
+// {
+// 	var msg = 'main page';
 	
-    qq.console(msg);
-})
-.add("login", function ()
-{
-	var msg = 'login page';
+//     qq.console(msg);
+// })
+// .add("login", function ()
+// {
+// 	var msg = 'login page';
 
-	//qq.loadModule({id:"mmOrders"});
+// 	//qq.loadModule({id:"mmOrders"});
 	
-	qq.init({module:"mmOrders"});
+// 	qq.init({module:"mmOrders"});
 	
-	qq.console(msg);
-})
-.add("cart", function ()
-{
-	var msg = 'cart page';
+// 	qq.console(msg);
+// })
+// .add("cart", function ()
+// {
+// 	var msg = 'cart page';
 
-	//qq.loadModule({id:"mmCart"});
-	debugger;
-	qq.init({module:"mmCart"});
+// 	//qq.loadModule({id:"mmCart"});
+// 	//debugger;
+// 	qq.init({module:"mmCart"});
 	
-	qq.console(msg);
-})
-.add("account", function ()
-{
-	var msg = 'account';
+// 	qq.console(msg);
+// })
+// .add("account", function ()
+// {
+// 	var msg = 'account';
 	
-	qq.console(msg);
-})
-.add("account/banking", function ()
-{
-	var msg = 'account banking';
+// 	qq.console(msg);
+// })
+// .add("account/banking", function ()
+// {
+// 	var msg = 'account banking';
 	
-	qq.console(msg);
-})
-.add("account/history", function ()
-{
-	var msg = 'account history';
+// 	qq.console(msg);
+// })
+// .add("account/history", function ()
+// {
+// 	var msg = 'account history';
 	
-	qq.console(msg);
-})
-.add("account/settings", function ()
-{
-	var msg = 'account settings';
+// 	qq.console(msg);
+// })
+// .add("account/settings", function ()
+// {
+// 	var msg = 'account settings';
 	
-	qq.console(msg);
-})
-.add("account/referral", function ()
-{
-	var msg = 'account referral';
+// 	qq.console(msg);
+// })
+// .add("account/referral", function ()
+// {
+// 	var msg = 'account referral';
 	
-	qq.console(msg);
-});
+// 	qq.console(msg);
+// });
 //.init();
 
 // qq.configure("container", "#wdgtMMOrders");

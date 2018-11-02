@@ -266,7 +266,7 @@ catch(e)
 							try
 							{
 								//console.log("* handler " + handler);
-
+								
 								handler.apply(null, [event]);
 							}
 							catch(e)

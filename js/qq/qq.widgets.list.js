@@ -258,7 +258,7 @@ catch(e)
 					{
 						if(cfg.transformer.type == "wrapper")
 						{
-							if(iref instanceof qq.$)
+							if(qq.isNode(iref))
 							{
 								iref.html('');
 							}
@@ -351,7 +351,7 @@ catch(e)
 				{
 					if(SUBSELECTORS[uid] != null)
 					{
-						throw new qq.Error("qq.widgets.list: Selector configuration under (uid:" + uid + ") is already registered.");
+						throw new qq.Error("qq.widgets.list", "registerSubSelector", "Selector configuration under (uid:" + uid + ") is already registered.");
 					}
 					else
 					{
@@ -373,7 +373,7 @@ catch(e)
 							{
 								if(WIDGETS[cfg.type] == null)
 								{
-									throw new qq.Error("qq.widgets.list: Invalid type (type:" + cfg.type + ") under selector configuration (uid:" + uid + ")");
+									throw new qq.Error("qq.widgets.list", "registerSubSelector", "Invalid type (type:" + cfg.type + ") under selector configuration (uid:" + uid + ")");
 								}
 							}
 						}
@@ -395,7 +395,7 @@ catch(e)
 						}
 						else if(!isGroup)
 						{
-							throw new qq.Error("qq.widgets.list: Selector configuration under (uid:" + uid + ") is missing a query (q:" + cfg.q + ").");
+							throw new qq.Error("qq.widgets.list", "registerSubSelector", "Selector configuration under (uid:" + uid + ") is missing a query (q:" + cfg.q + ").");
 						}
 
 						/* make a copy of the widget configuration and store it in sub selectors */
@@ -418,7 +418,7 @@ catch(e)
 				}
 				else
 				{
-					throw new qq.Error("Invalid selector id - (id:" + id + ").");
+					throw new qq.Error("qq.widgets.list", "registerSubSelector", "Invalid selector id - (id:" + id + ").");
 				}
 			};
 
@@ -495,45 +495,45 @@ catch(e)
 			};
 
 			/* performs query selection and establishes the dom & domqq references within the view */
-			var initChild = function (index, viewDOM, id, cfg)
+			var initChild = function (index, viewDOM, id, cfgchild)
 			{
 				var ref, refqq;
 				
-				ref = viewDOM.find(cfg.q);
+				ref = viewDOM.find(cfgchild.q);
 				refqq = null;
 				
-				if(cfg.qq != null && cfg.qq.length > 0)
+				if(cfgchild.qq != null && cfgchild.qq.length > 0)
 				{
-					refqq = ref.find(cfg.qq);
+					refqq = ref.find(cfgchild.qq);
 					
 					if(refqq.length > 0)
 					{
-						cfg.dom = ref;
-						cfg.domqq = refqq;
+						cfgchild.dom = ref;
+						cfgchild.domqq = refqq;
 						
-						processWidget_init_handler(index, refqq, cfg);
+						processWidget_init_handler(index, refqq, cfgchild);
 
 						return refqq;
 					}
 					else
 					{
-						throw new qq.Error("qq.View.initChild: Couldn't find sub selector (qq:" + cfg.qq + ").");
+						throw new qq.Error("qq.View", "initChild", "Couldn't find sub selector (qq:" + cfgchild.qq + ").");
 					}
 				}
 				else
 				{
 					if(ref.length > 0)
 					{
-						cfg.dom = ref;
-						cfg.domqq = null;
+						cfgchild.dom = ref;
+						cfgchild.domqq = null;
 						
-						processWidget_init_handler(index, ref, cfg);
+						processWidget_init_handler(index, ref, cfgchild);
 
 						return ref;
 					}
 					else
 					{
-						throw new qq.Error("qq.View.initChild: Couldn't find a selector (q:" + cfg.q + ") for (selector:" + id + ").");
+						throw new qq.Error("qq.View", "initChild", "Couldn't find a selector (q:" + cfgchild.q + ") for (selector:" + id + ").");
 					}
 				}
 			};
@@ -738,7 +738,7 @@ catch(e)
 			* Initializes each item within the list in this method.
 			* Here we set the value into each list item.
 			*/
-			var applyDataToItem = function (index, length, clone, iref, cfg, val, TRANSFORMERS)
+			var applyDataToItem = function (index, length, itemBody, iref, cfg, val, TRANSFORMERS)
 			{
 				console.log("*** applyDataToItem", index, iref, cfg, val);
 				
@@ -754,7 +754,7 @@ catch(e)
 							cfg.items = [];
 						}
 
-						var itemCfg = {ref:clone, children:{}};
+						var itemCfg = {ref:itemBody, children:{}};
 						
 						cfg.items.push(itemCfg);
 
@@ -768,11 +768,11 @@ catch(e)
 						console.log("W LIST TYPE")
 						if(cfg.item == null)
 						{
-							cfg.item = {ref:clone};
+							cfg.item = {ref:itemBody};
 						}
 
 						/* initialize the widget of type cfg.li.type */
-						processWidget_init_handler(index, clone, cfg);
+						processWidget_init_handler(index, itemBody, cfg);
 					}
 
 					//SUBSELECTORS
@@ -790,7 +790,7 @@ catch(e)
 					
 					if(cfg.on != null)
 					{
-						processOnHandlers(index, l, clone, iref, val, cfg);
+						processOnHandlers(index, l, itemBody, iref, val, cfg);
 					}
 				}
 			};
@@ -799,18 +799,25 @@ catch(e)
 			/**
 			 * This function setups the templates by collecting the templates from the html definition using a selector. 
 			 * The HTML definition may contain more than 1 child template, each template will be used as child.
+			 * @cfg selector configuration object for the widget
+			 * @index item index of the list in set of list arrays (but usually theres only 1 list).
+			 * @tag tag name
+			 * @curef current reference of the main list node
+			 * @data current list data
+			 * @TRANSFORMERS data transformers
 			 */
 			var setDataToList = function (cfg, index, tag, curef, data, TRANSFORMERS)
 			{
 				console.log("* setDataToList", cfg, index, tag, curef, data);
 
-				var ecfg,
-					val,
-					each, i, l, ii, ll, itemA, itemB, iref, parent, pholder, templates, temps, curli, temp, curq, curqq, wrapper, opts, 
-					on, onCfg, itype, inum, ifn;
+				var ecfg, /* list item element configuration */
+					val, each, i, l, ii, ll, itemA, itemB, iref, parent, pholder, templates, temps, 
+					curli, /* current list item selector configuration */
+					temp, curq, curqq, wrapper, opts, 
+					on, onCfg, itype, inum, ifn, clone;
 				
-				/* initial setup of the domJQConfig. This will happen for 
-
+				
+				/*
 				   - remove the LI elements and use them as templates for when updating the list.
 				   TODO add animation controls ability to fade in elements etc.
 				   TODO add custom children selector
@@ -820,6 +827,9 @@ catch(e)
 				   TODO optimize DOM manipulation, manipulate DOM in memory first
 				*/
 
+				/* initial setup of the domJQConfig.
+				* - setup a template 
+				*/
 				if(cfg.domJQConfig[index] == null)
 				{
 					/* here we query for lists children within the document or create them from a template */
@@ -896,7 +906,7 @@ catch(e)
 
 							if(curq == null)
 							{
-								throw new qq.Error("qq.setDataToList: Invalid list item selector.");
+								throw new qq.Error("qq.widgets.list", "setDataToList", "Invalid list item selector.");
 							}
 							
 							if(curq.charAt(0) === "<" && curq.charAt( curq.length - 1 ) === ">" && curq.length >= 3)
@@ -936,7 +946,7 @@ catch(e)
 						
 						temp = templates[0];
 						
-						if((temp.ref instanceof qq.$) || qq.isNode(temp.ref))
+						if(qq.isNode(temp.ref) == true)
 						{
 							//debugger;
 							//temp.ref = qq.$(qq.$(temp.ref).toString());
@@ -974,7 +984,7 @@ catch(e)
 						
 						temp = templates[0];
 						
-						if((temp.ref instanceof qq.$) || qq.isNode(temp.ref))
+						if(qq.isNode(temp.ref) == true)
 						{
 							if(_isNode)
 							{
@@ -1005,7 +1015,7 @@ catch(e)
 						
 						temp = templates[1];
 						
-						if((temp instanceof qq.$) || qq.isNode(temp))
+						if(qq.isNode(temp) == true)
 						{
 							if(_isNode)
 							{
@@ -1042,7 +1052,7 @@ catch(e)
 							{
 								temp = templates[i];
 								
-								if((temp.ref instanceof qq.$) || qq.isNode(temp.ref))
+								if(qq.isNode(temp.ref) == true)
 								{
 									if(_isNode)
 									{
@@ -1067,14 +1077,12 @@ catch(e)
 				{
 					ecfg = cfg.domJQConfig[index];
 				}
-				//debugger;
-				console.log("* ecfg", ecfg);
 				
 				i = 0;
 				l = data.length;
 				pholder = qq.$("<div />");
 				
-				/* remove the entire list reference from the HTML */
+				/* remove the entire list reference from the HTML DOM to manipulate it - recreate it without it being in the DOM */
 				curef.replaceWith(pholder);
 				
 				/* remove all children of the list item */
@@ -1102,37 +1110,6 @@ catch(e)
 					else
 					{
 						bOnRender = false;
-					}
-					
-					/* process on config */
-					if(cfg.onCfg == null)
-					{
-						onCfg = {n:{}, nint:{}};
-						
-						cfg.onCfg = onCfg;
-						
-						for(each in on)
-						{
-							if(each.charAt(0) == "n")
-							{
-								inum = each.substr(1);
-								
-								if(inum == parseInt(inum))
-								{
-									ifn = on[each];
-									
-									if(ifn != null)
-									{
-										onCfg.n[inum] = ifn;
-										onCfg.nint[inum] = inum;
-									}
-								}
-							}
-						}
-					}
-					else
-					{
-						onCfg = cfg.onCfg;
 					}
 				}
 				else
@@ -1184,7 +1161,8 @@ catch(e)
 						curef.append(clone);
 					}
 				}
-				/* two templates are present within the template collection */
+				/* TODO test
+				two templates are present within the template collection */
 				else if(ecfg.type == "double")
 				{
 					itemB = ecfg.items[1];
@@ -1248,7 +1226,7 @@ catch(e)
 							val = cfg.on.value.call(null, i, cfg, val);
 						}
 						
-						processItem(i, l, clone, iref, cfg, val);
+						applyDataToItem(i, l, clone, iref, cfg, val, TRANSFORMERS);
 
 						curef.append(clone);
 					}
@@ -1256,12 +1234,13 @@ catch(e)
 
 				console.log("Replace With", curef);
 				
-				pholder.replaceWith(curef);
-				
 				if(bOnRender)
 				{
 					cfg.on.render.call(null, l, curef, cfg);
 				}
+
+				pholder.replaceWith(curef);
+
 			}; /* end setDataToList method */
 			
 			/* Sets data to List, creates the entire list HTML in one swoop.
@@ -1270,24 +1249,52 @@ catch(e)
 			 * cfg - view configuration
 			 */
 			return {init: function (ref, cfg)
-					{
-						console.group("LIST INIT");
+						{
+							console.group("LIST INIT");
 
-						console.log("ref", ref);
-						console.log("cfg", cfg);
-						
-						if(WIDGETS == null)
-							WIDGETS = qq.getWidgets();
-						
-						if(GROUPS == null)
-							GROUPS = qq.getGroups();
-						
-						/* goes over the sub selectors and processes the configuration for later use when building the list */
-						registerSubSelectors(cfg);
+							console.log("ref", ref);
+							console.log("cfg", cfg);
+							
+							if(WIDGETS == null)
+								WIDGETS = qq.getWidgets();
+							
+							if(GROUPS == null)
+								GROUPS = qq.getGroups();
+							
+							/* goes over the sub selectors and processes the configuration for later use when building the list */
+							registerSubSelectors(cfg);
 
-						console.groupEnd();
-					},
-					set:function (ref, data, cfg, TRANSFORMERS)
+							/* process on config for the list widget */
+							/* on configuration makes it easy */
+							if(cfg.onCfg == null)
+							{
+								var onCfg = {n:{}, nint:{}};
+								
+								cfg.onCfg = onCfg;
+								
+								for(each in cfg.on)
+								{
+									if(each.charAt(0) == "n")
+									{
+										inum = each.substr(1);
+										
+										if(inum == parseInt(inum))
+										{
+											ifn = cfg.on[each];
+											
+											if(ifn != null)
+											{
+												onCfg.n[inum] = ifn;
+												onCfg.nint[inum] = inum;
+											}
+										}
+									}
+								}
+							}
+
+							console.groupEnd();
+						},
+						set:function (ref, data, cfg, TRANSFORMERS)
 						{
 							console.group("LIST SET");
 
@@ -1297,37 +1304,39 @@ catch(e)
 							
 							//window.cfg = cfg;
 							debugger;
+
 							if((data instanceof Array) && data.length > 0)
 							{
-								var curef, i, l;
+								var curef, index, l;
 								
 								/* initially setup dom configuration & items config */
 								if(cfg.domJQ == null)
 								{
 									/* this is configuration per each dom element of 'ref' */
+									/* each item in 'ref' is a list item html node */
 									cfg.domJQ = [];
-									cfg.domJQTags = [];
+									cfg.domJQTag = [];
 									cfg.domJQConfig = [];
 
-									cfg.listItems = [];
+									//cfg.listItems = [];
 									
-									for(i = 0, l = ref.length; i < l; i++)
+									for(index = 0, l = ref.length; index < l; index++)
 									{
 										/* current list reference */
-										curef = qq.$(ref[i]);
+										curef = qq.$(ref[index]);
 										
-										cfg.domJQ[i] = curef;
-										cfg.domJQTags[i] = curef.prop('tagName').toLowerCase();
+										cfg.domJQ[index] = curef;
+										cfg.domJQTag[index] = curef.prop('tagName').toLowerCase();
 										
-										setDataToList(cfg, i, cfg.domJQTags[i], curef, data, TRANSFORMERS);
+										setDataToList(cfg, index, cfg.domJQTag[index], curef, data, TRANSFORMERS);
 									}
 								}
 								else
 								{
 									/* this happens after all the dom references are setup in the configuration object */
-									for(i = 0, l = ref.length; i < l; i++)
+									for(index = 0, l = ref.length; index < l; index++)
 									{
-										setDataToList(cfg, i, cfg.domJQTags[i], cfg.domJQ[i], data, TRANSFORMERS);
+										setDataToList(cfg, index, cfg.domJQTag[index], cfg.domJQ[index], data, TRANSFORMERS);
 									}
 								}
 							}

@@ -51,7 +51,7 @@ catch(e)
 		alert("didn't inject qq.Router.js");
 	}
 	
-	var root = this,
+	var root = null,
 		_isNode = false;
 	
 	
@@ -63,6 +63,7 @@ catch(e)
 		//console.log("(qqa) ");
 		if(typeof module !== 'undefined' && module.exports)
 		{
+			root = this;
 			//console.log("(qqa1) " + qq);
 			module.exports = function (qqref)
 			{
@@ -81,6 +82,7 @@ catch(e)
 		}
 		else
 		{
+			root = window;
 			//console.log("(qqa2) ");
 			root.qq = qq;
 		}
@@ -444,4 +446,4 @@ catch(e)
 		registerRouter(qq);
 	}
 
-})(qq);
+}).apply(this, [qq]);

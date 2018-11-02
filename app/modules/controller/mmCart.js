@@ -1,6 +1,6 @@
 (function(qq)
 {
-	debugger;
+	//debugger;
 	console.log("%c module.Cart", "color: white; background: red; padding: 2px; font-size: 13px;");
 	/* mapToName: if true - maps view names to services */
 	var module = qq.registerModule("mmCart", {mapToName:true, mainView:"main"}),
@@ -53,7 +53,7 @@
 		}
 	};
 	
-	// fullView.services = {
+	// main.services = {
 	// 	updateImage1:{type:"json", url:"/data/imageTest-01.json", data:{}, dataMap:"direct"},
 	// 	updateImage2:{type:"json", url:"/data/imageTest-02.json", data:{}, dataMap:"direct"}
 	// };
@@ -90,18 +90,24 @@
 		}
 	};
 
+
+	/* The equivalent of the following meta definition is presented as selector configuration bellow:
+
+		<list id="cartList" selector="#mmCartList" onValue="onValue(index, length, val, cfg)" onRender="onRender(length, ref, cfg)">
+			<item selector="mmCItem">
+				<list id="cartGroup" selector="#mmCIContainer #mmCIGroup">
+					<mm.cartItem selector="mmCartItem" />
+				<list>
+			</item>
+		</list>
+	*/
+
 	/* the view has selectors. Then each selector has sub-selectors */
 	main.selectors = {
 		cartList:{q:"#mmCartList", 
 				type:"list", 
 				li:{q:"#mmCItem", 
-					selectors: {cartGroup:{q:"#mmCIContainer", qq:"#mmCIGroup", 
-												type:"list", 
-													li:{q:"#mmCartItem", 
-														type:"mm.cartItem"}
-											}
-								}
-					},
+					selectors: {cartGroup:{q:"#mmCIContainer", qq:"#mmCIGroup", type:"list", li:{q:"#mmCartItem", type:"mm.cartItem"}}}},
 				on:{
 					value:function (index, length, val, cfg)
 					{
@@ -114,9 +120,7 @@
 					{
 						console.log("cartList: (*) on render", length, "\nref", ref, "\ncfg", cfg);
 					}
-				}
-		}
-	};
+				}}};
 
 	/* register custom widgets */
 	main.widgets = {

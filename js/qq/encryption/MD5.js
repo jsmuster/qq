@@ -291,7 +291,7 @@ catch(e)
 		}());
 
 	};
-
+	
 	if(_isNode == false)
 	{
 		registerMD5(qq);

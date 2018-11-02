@@ -668,11 +668,11 @@ catch(e)
 		{
 			var mod = pObj[id],
 				counter = 0,
-				cfg = MODULES[id];
+				cfgm = MODULES[id];
 			
 			delete(pObj[id]);
 			
-			cfg.ref.configure(cfg.uid);
+			cfgm.ref.configure(cfgm.uid);
 			
 			for(var each in pObj)
 			{
@@ -698,21 +698,21 @@ catch(e)
 			},
 			onDoneController: function(mID, pObj, script, textStatus)
 			{
-				var cfg = MODULES[mID];
+				var cfgm = MODULES[mID];
 				
-				cfg.script = script;
+				cfgm.script = script;
 				
-				if(cfg.registered != true)
+				if(cfgm.registered != true)
 				{
 					throw new qq.Error("Controller for the module (id:" + mID + ") didn't register properly.");
 				}
 				else
 				{
-					cfg.controllerLoaded = true;
+					cfgm.controllerLoaded = true;
 				}
 				
 				/* DUPLICATE The following code snippet is a duplicate of the code BELLOW in the next delDone */
-				if(cfg.viewLoaded == true && cfg.controllerLoaded == true)
+				if(cfgm.viewLoaded == true && cfgm.controllerLoaded == true)
 				{
 					handleModuleLoaded(mID, pObj);
 				}
@@ -722,31 +722,31 @@ catch(e)
 				console.log("* DATA ", data);
 
 				//var mID = arguments.callee.id,
-				var	cfg = MODULES[mID];
+				var	cfgm = MODULES[mID];
 				//debugger;
 				
-				cfg.viewLoaded = true;
-				cfg.viewDoc = data;
+				cfgm.viewLoaded = true;
+				cfgm.viewDoc = data;
 
-				if(cfg.viewDoc != null && cfg.viewDoc.firstChild != null)
+				if(cfgm.viewDoc != null && cfgm.viewDoc.firstChild != null)
 				{
 					var nodeName;
 
 					if(_isNode)
 					{
-						nodeName = cfg.viewDoc.firstChild.name.toLowerCase();
+						nodeName = cfgm.viewDoc.firstChild.name.toLowerCase();
 					}
 					else
 					{
 						/* running in browser */
-						nodeName = cfg.viewDoc.firstChild.nodeName.toLowerCase();
+						nodeName = cfgm.viewDoc.firstChild.nodeName.toLowerCase();
 					}
 					
 					var childNodes, i, l, xmlNode;
 					
 					if(nodeName == "view")
 					{
-						childNodes = cfg.viewDoc.firstChild.childNodes;
+						childNodes = cfgm.viewDoc.firstChild.childNodes;
 						
 						for(i = 0, l = childNodes.length; i < l; i++)
 						{
@@ -754,14 +754,14 @@ catch(e)
 							
 							if(xmlNode.nodeType == 1)
 							{
-								cfg.viewNode = xmlNode;
+								cfgm.viewNode = xmlNode;
 								break;
 							}
 						}
 					}
 					else if(nodeName == "data")
 					{
-						childNodes = cfg.viewDoc.firstChild.childNodes;
+						childNodes = cfgm.viewDoc.firstChild.childNodes;
 						
 						for(i = 0, l = childNodes.length; i < l; i++)
 						{
@@ -773,16 +773,16 @@ catch(e)
 								{
 									if(xmlNode.name == "view")
 									{
-										cfg.viewNode = xmlNode;
+										cfgm.viewNode = xmlNode;
 									}
 									else if(xmlNode.name == "templates")
 									{
-										/*if(cfg.templates == null)
+										/*if(cfgm.templates == null)
 										{
-											cfg.templates = {};
+											cfgm.templates = {};
 										}
 										
-										cfg.templates[xmlNode.nodeName] = xmlNode;*/
+										cfgm.templates[xmlNode.nodeName] = xmlNode;*/
 									}
 								}
 								else
@@ -790,16 +790,16 @@ catch(e)
 									/* running in browser */
 									if(xmlNode.nodeName == "view")
 									{
-										cfg.viewNode = xmlNode;
+										cfgm.viewNode = xmlNode;
 									}
 									else if(xmlNode.nodeName == "templates")
 									{
-										/*if(cfg.templates == null)
+										/*if(cfgm.templates == null)
 										{
-											cfg.templates = {};
+											cfgm.templates = {};
 										}
 										
-										cfg.templates[xmlNode.nodeName] = xmlNode;*/
+										cfgm.templates[xmlNode.nodeName] = xmlNode;*/
 									}
 								}
 
@@ -808,7 +808,7 @@ catch(e)
 						}
 					}
 					
-					if(cfg.viewNode == null)
+					if(cfgm.viewNode == null)
 					{
 						throw new qq.Error("Couldn't find the view data for the module (id:" + mID + "), it maybe empty.");
 					}
@@ -818,13 +818,13 @@ catch(e)
 					throw new qq.Error("View document for the module (id:" + mID + ") must contain the root 'view' node.");
 				}
 				
-				if(cfg.viewLoaded == true && cfg.controllerLoaded == true)
+				if(cfgm.viewLoaded == true && cfgm.controllerLoaded == true)
 				{
-					/*var fn = cfg.ref.init(cfg.uid);
+					/*var fn = cfgm.ref.init(cfgm.uid);
 					
 					if(fn != null && typeof(fn) == "function")
 					{
-						cfg.resHandler = fn;
+						cfgm.resHandler = fn;
 					}*/
 					
 					handleModuleLoaded(mID, pObj);
@@ -853,7 +853,7 @@ catch(e)
 		var processModules = function ()
 		{
 			/* set all the references for this function */
-			var cfg, 
+			var cfgm, 
 				mid, 
 				typeOfPathContrl, 
 				pathControllers = CONFIG.controllers, 
@@ -890,31 +890,31 @@ catch(e)
 			 */
 			for(var each in MODULES)
 			{
-				cfg = MODULES[each];
+				cfgm = MODULES[each];
 				
-				mid = cfg.config.id;
+				mid = cfgm.config.id;
 				
-				pObj[mid] = cfg;
+				pObj[mid] = cfgm;
 			}
 			
 			/* go through all the registered modules */
 			for(var each in MODULES)
 			{
-				cfg = MODULES[each];
+				cfgm = MODULES[each];
 				
-				cfg.viewLoaded = false;
-				cfg.controllerLoaded = false;
+				cfgm.viewLoaded = false;
+				cfgm.controllerLoaded = false;
 				
-				mid = cfg.config.id;
+				mid = cfgm.config.id;
 				
-				//pObj[mid] = cfg;
+				//pObj[mid] = cfgm;
 				
 				/** LOAD CONTROLLER **/
 				
 				/* get controller name from config or module uid */
-				if(cfg.config.controller != null && cfg.config.controller.length > 0)
+				if(cfgm.config.controller != null && cfgm.config.controller.length > 0)
 				{
-					cname = cfg.config.controller;
+					cname = cfgm.config.controller;
 				}
 				else
 				{
@@ -922,9 +922,9 @@ catch(e)
 				}
 				
 				/* get view name or use module uid */
-				if(cfg.config.view != null && cfg.config.view.length > 0)
+				if(cfgm.config.view != null && cfgm.config.view.length > 0)
 				{
-					vname = cfg.config.view;
+					vname = cfgm.config.view;
 				}
 				else
 				{
@@ -1114,7 +1114,7 @@ catch(e)
 		};
 		
 		/**
-		* Loads a module.
+		* Registers a module configuration for loading.
 		*/
 		var loadModule = function (config)
 		{
@@ -1139,18 +1139,18 @@ catch(e)
 		{
 			if(MODULES[id] != null)
 			{
-				var cfg = MODULES[id],
+				var cfgm = MODULES[id],
 					ref;
 				
-				cfg.registered = true;
-				cfg.config;
+				cfgm.registered = true;
+				cfgm.config;
 				
-				cfg.args = args;
-				cfg.uid = UIDGen.generate();
+				cfgm.args = args;
+				cfgm.uid = UIDGen.generate();
 				
-				ref = new qq.Module(id, cfg.uid, WIDGETS, GROUPS);
+				ref = new qq.Module(id, cfgm.uid, WIDGETS, GROUPS);
 				
-				cfg.ref = ref;
+				cfgm.ref = ref;
 				
 				return ref;
 			}
@@ -1291,7 +1291,11 @@ catch(e)
 			window.location.hash = str;
 		};
 		
-		
+		/**
+		* Processes the absolute / relative state handlers.
+		* Absolute state handler will execute ONLY if given arguments object contain exact number of state handlers.
+		* Relative state handler will execute IF the arguments object contains the minimum required set of properties.
+		*/
 		var processStateHandler = function (args)
 		{
 			var each, arr = [], names, hashtag, cfg, i = 0, l, opts, equals = 0, total = 0, msg;
@@ -1407,12 +1411,8 @@ catch(e)
 					}
 				}
 			}
-			
-			
-			
-			
-			
-		};
+
+		}; /* end processStateHandler method */
 		
 		/**
 		* Executes response handler method for the module and passes in the request arguments, but saves the request & arguments for later when module loads.
@@ -1424,105 +1424,97 @@ catch(e)
 			console.group("* process state request");
 
 			/* module ID */
-				var mid = args.module, 
-			/* action ID */
+			var mid = args.module, 
+				/* action ID */
 				aid =  args.action, 
-			/* config */
-				cfg, arr, saveArgs;
-				
-				if(mid != null && mid.length > 0)
+				/* config */
+				cfgm, arr, saveArgs;
+			
+			if(mid != null && mid.length > 0)
+			{
+				if(MODULES[mid] != null)
 				{
-					if(MODULES[mid] != null)
+					cfgm = MODULES[mid];
+					
+					if(cfgm.registered == true && (cfgm.viewLoaded == true && cfgm.controllerLoaded == true))
 					{
-						cfg = MODULES[mid];
+						/* clone the view reference if it doesn't exist */
 						
-						if(cfg.registered == true && (cfg.viewLoaded == true && cfg.controllerLoaded == true))
+						focusModuleInView(mid);
+						
+						/* TODO add simple event manager to the mix and execute life cycle events */
+						
+						/* before the module view is shown we must initialize it, extract view references, hide all the unnecessary views, some views may require to be visibility hidden instead of display none */
+						
+						/* when changing views or modules, perform a life cycle that allows us to add animations to view / module transitions / add build in transitions */
+						
+						saveArgs = args;
+						
+						/* oninit is used to save state requests so they are processed when module finished loading assets and registered.
+						*  process all prior requests first
+						*/
+						if(cfgm.oninit != null && cfgm.oninit.length > 0)
 						{
-							/* clone the view reference if it doesn't exist */
+							arr = cfgm.oninit;
 							
-							focusModuleInView(mid);
-							
-							/* TODO add simple event manager to the mix and execute life cycle events */
-							
-							
-							/* before the module view is shown we must initialize it, extract view references, hide all the unnecessary views, some views may require to be visibility hidden instead of display none */
-							
-							/* when changing views or modules, perform a life cycle that allows us to add animations to view / module transitions / add build in transitions */
-							
-							saveArgs = args;
-							
-							/* oninit is used to save state requests so they are processed when module finished loading assets and registered.
-							*  process all prior requests first
-							*/
-							if(cfg.oninit != null && cfg.oninit.length > 0)
+							for(var i = 0, l = arr.length; i < l; i++)
 							{
-								arr = cfg.oninit;
+								args = arr[i];
 								
-								for(var i = 0, l = arr.length; i < l; i++)
+								if(cfgm.resHandler != null)
 								{
-									args = arr[i];
-									
-									if(cfg.resHandler != null)
+									try
 									{
-										try
-										{
-											cfg.resHandler.apply(cfg.ref, [args]);
-										}
-										catch(e)
-										{
-											throw new qq.Error("qq.processStateRequest: There was an error executing the response handler for module (id:" + mid + "). " + e);
-										}
+										cfgm.resHandler.apply(cfgm.ref, [args]);
 									}
-									
-									processStateHandler(args);
+									catch(e)
+									{
+										throw new qq.Error("qq.processStateRequest: There was an error executing the response handler for module (id:" + mid + "). " + e);
+									}
 								}
+								
+								processStateHandler(args);
 							}
-							
-							/* save args is a previously saved args - we might have used args to execute oninit */
-							args = saveArgs;
-							
-							/* execute a response handler with the arguments */
-							if(cfg.resHandler != null)
+						}
+						
+						/* save args is a previously saved args - we might have used args to execute oninit */
+						args = saveArgs;
+						
+						/* execute a response handler with the arguments */
+						if(cfgm.resHandler != null)
+						{
+							try
 							{
-								try
-								{
-									cfg.resHandler.apply(cfg.ref, [args]);
-								}
-								catch(e)
-								{
-									throw new qq.Error("qq.processStateRequest: There was an error executing the response handler for module (id:" + mid + ")." + e);
-								}
+								cfgm.resHandler.apply(cfgm.ref, [args]);
 							}
-							//console.log("4 args", args);
-							processStateHandler(args);
+							catch(e)
+							{
+								throw new qq.Error("qq.processStateRequest: There was an error executing the response handler for module (id:" + mid + ")." + e);
+							}
+						}
+						
+						processStateHandler(args);
+					}
+					else
+					{
+						/* save requests if the module hasn't loaded or registered. these requests get processed as soon as the module loads */
+
+						/* TODO test if this works */
+						/* TODO error ? or keep the last state set and execute only when module has been registered */
+						if(cfgm.oninit == null)
+						{
+							arr = [];
+							cfgm.oninit = arr;
 						}
 						else
 						{
-							/* save requests if the module hasn't loaded or registered. these requests get processed as soon as the module loads */
-	
-							/* TODO test if this works */
-							/* TODO error ? or keep the last state set and execute only when module has been registered */
-							if(cfg.oninit == null)
-							{
-								arr = [];
-								cfg.oninit = arr;
-							}
-							else
-							{
-								arr = cfg.oninit;
-							}
-							
-							cfg.oninit[cfg.oninit.length] = args;
+							arr = cfgm.oninit;
 						}
+						
+						cfgm.oninit[cfgm.oninit.length] = args;
 					}
 				}
-				else if(aid != null && aid.length > 0)
-				{
-					if(ACTIONS[aid] != null)
-					{
-						cfg = ACTIONS[mid];
-					}
-				}
+			}
 	
 			console.groupEnd();
 		};
@@ -1605,9 +1597,9 @@ catch(e)
 		
 		var hideModule = function (mid)
 		{
-			var cfg = MODULES[mid];
+			var cfgm = MODULES[mid];
 
-			cfg.view.css("display", "none");
+			cfgm.view.css("display", "none");
 
 			//args: Proxy {mapToName: true, mainView: "main"}
 			//config: {id: "mmCart"}
@@ -1627,9 +1619,9 @@ catch(e)
 			
 			if(containerType == "bs:carousel")
 			{
-				if(cfg.viewWrapper != null)
+				if(cfgm.viewWrapper != null)
 				{
-					//cfg.viewWrapper.removeClass("active");
+					//cfgm.viewWrapper.removeClass("active");
 				}
 			}
 			
@@ -1637,23 +1629,23 @@ catch(e)
 		
 		var showModule = function (mid)
 		{
-			var cfg = MODULES[mid];
+			var cfgm = MODULES[mid];
 			
 			console.log("qq.init: (5-d1) show module.");
 
-			/* cfg.view is a real time Node, so any changes to it affect the view */
-			cfg.view.css("display", "block");
+			/* cfgm.view is a real time Node, so any changes to it affect the view */
+			cfgm.view.css("display", "block");
 			
 			if(containerType == "bs:carousel")
 			{
-				//cfg.viewWrapper.addClass("active");
+				//cfgm.viewWrapper.addClass("active");
 				
 				var arr = CONTAINERINNER.children(),
 					i = 0, l = arr.length;
 				
 				for(; i < l; i++)
 				{
-					if(arr[i] == cfg.viewWrapper[0])
+					if(arr[i] == cfgm.viewWrapper[0])
 					{
 						CONTAINER.carousel(i);
 						
@@ -1674,65 +1666,73 @@ catch(e)
 		var focusModuleInView = function (mid)
 		{
 			var lastCfg = MODULES[lastModule],
-				cfg = MODULES[mid], vcfg;
+				cfgm = MODULES[mid], vcfg;
 			
 			if(lastCfg != null)
 			{
-				debugger;
+				//debugger;
 				console.log("qq.init: (5-a) hide previous module.");
 				// hide the module depending on its configuration
 				hideModule(lastModule);
 			}
 
-			debugger;
+			//debugger;
 			/* if the view doesn't exist then */
 			/* create & insert the view html into the DOM */
-			if(cfg.view == null)
+			if(cfgm.view == null)
 			{
-				if(cfg.viewNode != null)
+				if(cfgm.viewNode != null)
 				{
 					/* generate the view string out of the module's view node */
-					if(cfg.viewString == null)
+					if(cfgm.viewString == null)
 					{
 						console.log("qq.init: (5-b) get view string from node tree.");
 						if(_isNode)
 						{
-							cfg.viewString = XMLtoString(qq.$(cfg.viewNode));
+							cfgm.viewString = XMLtoString(qq.$(cfgm.viewNode));
 						}
 						else
 						{
-							cfg.viewString = XMLtoString(qq.$(cfg.viewNode).clone()[0]);
+							cfgm.viewString = XMLtoString(qq.$(cfgm.viewNode).clone()[0]);
 						}
 					}
 					
 					/* add view string to container */
-					if(cfg.viewString != null)
+					if(cfgm.viewString != null)
 					{
 						console.log("qq.init: (5-c) add view string to container.");
-						vcfg = addToContainer(cfg.viewString);
+
+						/**
+						 * View configuration after adding to main module container
+						 * returns an object {content, uid, wrapper, type};
+						 * type - container type
+						 */
+						vcfg = addToContainer(cfgm.viewString);
+						/* TODO figure out if we need to add the view string into the main app container, perhaps do it after all the widgets are built */
 						
 						/* content is a node of the view */
-						cfg.view = vcfg.content;
+						cfgm.view = vcfg.content;
 
 						/* uid is also the .id attribute */
-						cfg.viewUID = vcfg.uid;
+						cfgm.viewUID = vcfg.uid;
 
+						/* TODO figure out if we need a view wrapper to begin with */
 						/* view wrapper node */
-						cfg.viewWrapper = vcfg.wrapper;
+						cfgm.viewWrapper = vcfg.wrapper;
 						
 						/* initialize the module prior to showing it, assign the 'resHandler' if a function was returned from the 'init' method. */
 						
-						//console.log("* initialize the module prior to showing it", cfg, cfg.ref);
+						//console.log("* initialize the module prior to showing it", cfgm, cfg.ref);
 						
+						/* initialize a module qq.Module.init */
 						/* ref is the module reference */
-						debugger;
-						if(cfg.ref.init != null)
+						if(cfgm.ref.init != null)
 						{
-							var fn = cfg.ref.init(cfg.uid, cfg.args, cfg.viewWrapper);
+							var fn = cfgm.ref.init(cfgm.uid, cfgm.args, cfgm.viewWrapper);
 							
 							if(fn != null && typeof(fn) == "function")
 							{
-								cfg.resHandler = fn;
+								cfgm.resHandler = fn;
 							}
 						}
 					}
@@ -1740,7 +1740,7 @@ catch(e)
 			}
 			
 			//show module ie process initialization sequence
-			if(cfg.view != null)
+			if(cfgm.view != null)
 			{
 				showModule(mid);
 			}
@@ -1749,11 +1749,22 @@ catch(e)
 		};
 		
 		
+		/**
+		* Adds a view string to the main container
+		*/
 		var addToContainer = function (str)
 		{
 			var uid = "qq" + UIDGen.generate(),
-				content = qq.$(str),
-				wrapper;
+				wrapper, content;
+
+			try
+			{
+				content = qq.$(str);
+			}
+			catch(e)
+			{
+				throw new qq.Error("qq", "addToContainer", "Error parsing the view html.\n" + e);
+			}
 			
 			if(containerType == "bs:carousel")
 			{
@@ -1771,8 +1782,6 @@ catch(e)
 				
 				appendToContainer(wrapper);
 			}
-			
-			//initBootstrapIn("#"+uid);
 			
 			return {content:content, uid:uid, wrapper:wrapper, type: containerType};
 		};
@@ -2234,7 +2243,60 @@ catch(e)
 			}
 			else
 			{
-				return obj.name || obj.type === 'text' || obj.type === 'comment';
+				if(obj instanceof qq.$)
+				{
+					return true;
+				}
+				else
+				{
+					return obj.name || obj.type === 'text' || obj.type === 'comment';
+				}
+			}
+		};
+
+		/**
+		* Sets up the global container reference, where the modules will render themselves.
+		*/
+		var setupContainerReference = function ()
+		{
+			/* Here is where we find the app container in the application 'document' */
+			if(_isNode)
+			{
+				/* this should search for the container in a global document */
+				CONTAINER = qq.document.find(CONFIG.container);
+
+				if(CONTAINER.length > 0)
+				{
+					console.log("qq.init: (1) setup container reference.")
+				}
+			}
+			else
+			{
+				CONTAINER = qq.$(CONFIG.container);
+
+				/* If we find a container reference */
+				if(CONTAINER.length > 0)
+				{
+					CONTAINER = qq.$(CONFIG.container);
+					/* class list is currently only being used by non-node environments */
+					var classList = CONTAINER[0].className.split(/\s+/);
+
+					var classDict = {};
+
+					for(var i = 0; i < classList.length; i++)
+					{
+						classDict[classList[i]] = true;
+					}
+
+					if(classDict.carousel == true)
+					{
+						containerType = "bs:carousel";
+						
+						CONTAINERINNER = CONTAINER.find(".carousel-inner");
+						
+						CONTAINER.carousel({pause:true, interval:false});
+					}
+				}
 			}
 		};
 		
@@ -2262,45 +2324,7 @@ catch(e)
 
 				//debugger;
 
-				/* Here is where we find the app container in the application 'document' */
-				if(_isNode)
-				{
-					/* this should search for the container in a global document */
-					CONTAINER = qq.document.find(CONFIG.container);
-
-					if(CONTAINER.length > 0)
-					{
-						console.log("qq.init: (1) setup container reference.")
-					}
-				}
-				else
-				{
-					CONTAINER = qq.$(CONFIG.container);
-
-					/* If we find a container reference */
-					if(CONTAINER.length > 0)
-					{
-						CONTAINER = qq.$(CONFIG.container);
-						/* class list is currently only being used by non-node environments */
-						var classList = CONTAINER[0].className.split(/\s+/);
-
-						var classDict = {};
-
-						for(var i = 0; i < classList.length; i++)
-						{
-							classDict[classList[i]] = true;
-						}
-
-						if(classDict.carousel == true)
-						{
-							containerType = "bs:carousel";
-							
-							CONTAINERINNER = CONTAINER.find(".carousel-inner");
-							
-							CONTAINER.carousel({pause:true, interval:false});
-						}
-					}
-				}
+				setupContainerReference();
 				
 				REGISTRY = new qq.Registry();
 				
@@ -2421,7 +2445,16 @@ catch(e)
 		};
 		
 		errr.prototype = new Error();
+
+		// cfg.domJQ
+		// cfg.domJQTags
+		// cfg.domJQConfig[index] = ecfg
 		
+		// ecfg.items - template items
+		// ecfg.type - type of template pattern
+
+		// ecfg.items.item.qq
+		// ecfg.items.item.qqref
 		
 		registerWidget.group = registerWidgetGroup;
 

@@ -139,20 +139,23 @@ catch(e)
 			
 			/**** SELECTORS ****/
 			
-			this.registerSelector = function (id, cfg)
+			/**
+			* Registers a selector with the view.
+			*/
+			var registerSelector = function (id, selector)
 			{
 				if(id != null && id.length > 0)
 				{
-					if(cfg.uid != null)
+					if(selector.uid != null)
 					{
-						throw new qq.Error("qq.View.registerSelector", "The selector you are trying to register can not have a uid (id:" + id + ").");
+						throw new qq.Error("qq.View", "registerSelector", "The selector you are trying to register can not have a uid (id:" + id + ").");
 					}
 					
 					/* generate a UID hash code out of the selector object so we can store custom configuration for this object */
 					var path = modID + "." + viewID + "." + id;
 					
 					/* widget uid in the current view */
-					var uid = qq.GetHashCode(cfg, path);
+					var uid = qq.GetHashCode(selector, path);
 					
 					console.log("%c register selector - path: " + path, "color: green;");
 					
@@ -166,17 +169,17 @@ catch(e)
 					{
 						var isGroup = false;
 						
-						if(cfg.type != null)
+						if(selector.type != null)
 						{
-							if(typeof(cfg.type) == "object")
+							if(typeof(selector.type) == "object")
 							{
 								isGroup = true;
 							}
 							else
 							{
-								if(WIDGETS[cfg.type] == null)
+								if(WIDGETS[selector.type] == null)
 								{
-									throw new qq.Error("qq.View.registerSelector: Invalid type (type:" + cfg.type + ") under selector configuration (id:" + id + "), view id (id:" + viewID + "), module id (id:" + modID + ").");
+									throw new qq.Error("qq.View.registerSelector: Invalid type (type:" + selector.type + ") under selector configuration (id:" + id + "), view id (id:" + viewID + "), module id (id:" + modID + ").");
 								}
 							}
 						}
@@ -185,9 +188,9 @@ catch(e)
 							isGroup = true;
 						}
 						
-						if(cfg.q != null)
+						if(selector.q != null)
 						{
-							if(typeof(cfg.q) == "object")
+							if(typeof(selector.q) == "object")
 							{
 								isGroup = true;
 							}
@@ -198,21 +201,24 @@ catch(e)
 						}
 						else if(!isGroup)
 						{
-							throw new qq.Error("qq.View.registerSelector: Selector configuration under (id:" + id + ") is missing a query (q:" + cfg.q + "), view id (id:" + viewID + "), module id (id:" + modID + ").");
+							throw new qq.Error("qq.View.registerSelector: Selector configuration under (id:" + id + ") is missing a query (q:" + selector.q + "), view id (id:" + viewID + "), module id (id:" + modID + ").");
 						}
 						
-						var ncfg = qq.$.extend(true, {}, cfg);
+						/* new configuration object for a selector */
+						var ncfg = qq.$.extend(true, {}, selector);
+							/* uid is MD5 hash of the path */
 							ncfg.uid = uid;
+							/* selector path based on its hierarchy */
 							ncfg.path = path;
 						
 						if(isGroup == true)
 						{
 							/* items - selector references, irefs - dom item references */
-							SELECTOR[id] = {id:id, path:path, items:ncfg, group:true, irefs:{}};
+							SELECTOR[id] = {id: id, path: path, items: ncfg, group: true, irefs: {}};
 						}
 						else
 						{
-							SELECTOR[id] = {id:id, path:path, cfg:ncfg, group:false};
+							SELECTOR[id] = {id: id, path: path, selector: ncfg, group: false};
 						}
 					}
 				}
@@ -221,7 +227,11 @@ catch(e)
 					throw new qq.Error("Invalid selector id - (id:" + id + ").");
 				}
 			};
+			this.registerSelector = registerSelector;
 			
+			/**
+			* Processes the 'selectors' and registers them into the View.
+			*/
 			var processSelectors = function ()
 			{
 				var sels = this.selectors;
@@ -237,7 +247,7 @@ catch(e)
 			
 			/**** TRIGGERS ****/
 			
-			this.registerTrigger = function (id, cfg)
+			var registerTrigger = function (id, cfg)
 			{
 				if(id != null && id.length > 0)
 				{
@@ -255,6 +265,7 @@ catch(e)
 					throw new qq.Error("Invalid trigger id - (id:" + id + "), view id (id:" + viewID + "), module id (id:" + modID + ").");
 				}
 			};
+			this.registerTrigger = registerTrigger;
 			
 			var processTriggers = function ()
 			{
@@ -285,7 +296,7 @@ catch(e)
 			};
 			
 			
-			this.registerDefault = function (id, val)
+			var registerDefault = function (id, val)
 			{
 				if(id != null && id.length > 0)
 				{
@@ -296,6 +307,7 @@ catch(e)
 					throw new qq.Error("Invalid default id - (id:" + id + "), view id (id:" + viewID + "), module id (id:" + modID + ").");
 				}
 			};
+			this.registerDefault = registerDefault;
 			
 			/**** DATA / VIEW MAP ****/
 			
@@ -313,7 +325,7 @@ catch(e)
 			};
 			
 			
-			this.setDataMap = function (id, selector)
+			var setDataMap = function (id, selector)
 			{
 				if(id != null && id.length > 0)
 				{
@@ -324,10 +336,11 @@ catch(e)
 					throw new qq.Error("Invalid data map id - (id:" + id + "), view id (id:" + viewID + "), module id (id:" + modID + ").");
 				}
 			};
+			this.setDataMap = setDataMap;
 			
 			/**** SERVICES ****/
 			
-			this.registerService = function (type, cfg)
+			var registerService = function (type, cfg)
 			{
 				if(type != null && type.length > 0)
 				{
@@ -345,8 +358,9 @@ catch(e)
 					throw new qq.Error("Invalid service type - (type:" + type + "), view id (id:" + viewID + "), module id (id:" + modID + ").");
 				}
 			};
+			this.registerService = registerService;
 
-			this.registerTransformer = function (type, cfg)
+			var registerTransformer = function (type, cfg)
 			{
 				if(type != null && type.length > 0)
 				{
@@ -364,6 +378,7 @@ catch(e)
 					throw new qq.Error("registerTransformers", "Invalid service type - (type:" + type + "), view id (id:" + viewID + "), module id (id:" + modID + ").");
 				}
 			};
+			this.registerTransformer = registerTransformer;
 			
 			var processTransformers = function ()
 			{
@@ -391,7 +406,7 @@ catch(e)
 				}
 			};
 			
-			this.updateService = function (id, data, done)
+			var updateService = function (id, data, done)
 			{
 				var cfg = SERVICES[id], nudata = {}, dcounter = 0;
 				
@@ -440,9 +455,10 @@ catch(e)
 					}
 				}
 			};
+			this.updateService = updateService;
 			
 			/* loads data from external service and sends it into the widget */
-			this.openService = function (id, data, done, fail)
+			var openService = function (id, data, done, fail)
 			{
 				var cfg = SERVICES[id], nudata = {};
 				
@@ -535,10 +551,11 @@ catch(e)
 				}
 				
 			};
+			this.openService = openService;
 			
 			/** ACTIONS **/
 			
-			this.registerAction = function (id, del)
+			var registerAction = function (id, del)
 			{
 				if(id != null && id.length > 0)
 				{
@@ -549,10 +566,11 @@ catch(e)
 					throw new qq.Error("Invalid action id - (id:" + id + "), view id (id:" + viewID + "), module id (id:" + modID + ").");
 				}
 			};
+			this.registerAction = registerAction;
 			
 			/** EVENTS **/
 			
-			this.on = function (type, del)
+			var on = function (type, del)
 			{
 				if(type != null && type.length > 0)
 				{
@@ -583,644 +601,7 @@ catch(e)
 					throw new qq.Error("Invalid event handler type - (type:" + type + "), view id (id:" + viewID + "), module id (id:" + modID + ").");
 				}
 			};
-			
-			/** DATA TO VIEW **/
-			
-			// var setListItemValue = function (index, iref, cfg, val)
-			// {
-			// 	var ii, ll, opts, wrapper, inwrpr;
-				
-			// 	if(iref.length > 0)
-			// 	{
-			// 		if(cfg.transformer != null)
-			// 		{
-			// 			if(cfg.transformer.type == "wrapper")
-			// 			{
-			// 				if(iref instanceof jQuery)
-			// 				{
-			// 					iref.html('');
-			// 				}
-			// 				else
-			// 				{
-			// 					for(ii = 0, ll = iref.length; ii < ll; ii++)
-			// 					{
-			// 						$(iref[ii]).html('');
-			// 					}
-			// 				}
-							
-			// 				opts = cfg.transformer.opts;
-							
-			// 				if(opts != null)
-			// 				{
-			// 					if(typeof(opts) == "object")
-			// 					{
-			// 						if(opts.q != null && opts.q.length > 0)
-			// 						{
-			// 							if(opts.q.charAt(0) === "<" && opts.q.charAt( opts.q.length - 1 ) === ">" && opts.q.length >= 3)
-			// 							{
-			// 								wrapper = $(opts.q);
-											
-			// 								if(opts.qq != null && opts.q.length > 0)
-			// 								{
-			// 									inwrpr = wrapper.find(opts.qq);
-												
-			// 									if(inwrpr.length > 0)
-			// 									{
-			// 										inwrpr.html(val);
-			// 									}
-			// 									else
-			// 									{
-			// 										throw new qq.Error("qq.setListItemValue(1): Couldn't 'find' an element inside the wrapper (opts.q:'" + opts.q + "'), (opts.qq:'" + opts.qq + "'), view id (id:" + viewID + "), module id (id:" + modID + ").");
-			// 									}
-			// 								}
-			// 								else
-			// 								{
-			// 									wrapper.html(val);
-			// 								}
-			// 							}
-			// 							else
-			// 							{
-			// 								throw new qq.Error("qq.setListItemValue(2): The 'wrapper' transformer must be a valid jQuery template (q:'" + opts.q + "'), view id (id:" + viewID + "), module id (id:" + modID + ").");
-			// 							}
-			// 						}
-			// 						else
-			// 						{
-			// 							throw new qq.Error("qq.setListItemValue(3): The 'wrapper' transformer options object doesn't contain a valid template. (opts.q:'" + opts.q + "'), view id (id:" + viewID + "), module id (id:" + modID + ").");
-			// 						}
-			// 					}
-			// 					else if(opts.charAt(0) === "<" && opts.charAt( opts.length - 1 ) === ">" && opts.length >= 3)
-			// 					{
-			// 						wrapper = $(opts);
-																
-			// 						wrapper.html(val);
-			// 					}
-			// 					else
-			// 					{
-			// 						throw new qq.Error("qq.setListItemValue(4): Invalid 'wrapper' transformer options (opts:'" + opts + "'), view id (id:" + viewID + "), module id (id:" + modID + ").");
-			// 					}
-			// 				}
-							
-			// 				iref.append(wrapper);
-			// 			}
-			// 			else
-			// 			{
-			// 				val = qq.transform(val, cfg.transformer);
-												
-			// 				iref.html(val);
-			// 			}
-			// 		}
-			// 		else
-			// 		{
-			// 			iref.html(val);
-			// 		}
-			// 	}
-			// };
-			
-			// var bOnValue,
-			// 		bOnRender;
-			
-			/* TODO unfold the method */
-			// var executeOnHandler = function (ref, index, total, clone, iref, val, cfg)
-			// {
-			// 	var i,l,reftype, otype, each, o;
-				
-			// 	if(ref instanceof Function)
-			// 	{
-			// 		ref.call(null, index, total, clone, iref, val, cfg);
-			// 	}
-			// 	else
-			// 	{
-			// 		if(ref instanceof Array)
-			// 		{
-			// 			for(i = 0, l = ref.length; i < l; i++)
-			// 			{
-			// 				clone.addClass(ref[i]);
-			// 			}
-			// 		}
-			// 		else
-			// 		{
-			// 			reftype = typeof(ref);
-						
-			// 			if(reftype == "string")
-			// 			{
-			// 				clone.addClass(ref);
-			// 			}
-			// 			else if(reftype == "object")
-			// 			{
-			// 				if(ref.cls != null)
-			// 				{
-			// 					o = ref.cls;
-								
-			// 					if(o instanceof Array)
-			// 					{
-			// 						for(i = 0, l = o.length; i < l; i++)
-			// 						{
-			// 							clone.addClass(o[i]);
-			// 						}
-			// 					}
-			// 					else
-			// 					{
-			// 						otype = typeof(o);
-									
-			// 						if(otype == "string")
-			// 						{
-			// 							if(o.charAt(0) == "-")
-			// 							{
-			// 								o = o.substr(1);
-			// 								clone.removeClass(o);
-			// 							}
-			// 							else
-			// 							{
-			// 								clone.addClass(o);
-			// 							}
-			// 						}
-			// 						else if(otype == "object")
-			// 						{
-			// 							for(each in o)
-			// 							{
-			// 								if(o[each] == false)
-			// 								{
-			// 									clone.removeClass(each);
-			// 								}
-			// 								else
-			// 								{
-			// 									clone.addClass(each);
-			// 								}
-			// 							}
-			// 						}
-			// 					}
-			// 				}
-							
-			// 				/** attributes **/
-							
-			// 				if(ref.attr != null)
-			// 				{
-			// 					clone.attr(ref.attr);
-			// 				}
-							
-			// 				if(ref.data != null)
-			// 				{
-			// 					clone.data(ref.attr);
-			// 				}
-							
-			// 			}
-			// 		}
-			// 	}
-			// };
-			
-			// var processOnHandlers = function (index, total, clone, iref, val, cfg)
-			// {
-			// 	var onCfg = cfg.onCfg, n = onCfg.n, each, nint, ncfg, on = cfg.on, ref, reftype;
-				
-			// 	for(each in n)
-			// 	{
-			// 		nint = onCfg.nint[each];
-					
-			// 		if(((index + 1) % nint) == 0)
-			// 		{
-			// 			ncfg = n[each];
-						
-			// 			executeOnHandler(ncfg, index, total, clone, iref, val, cfg);
-			// 		}
-			// 	}
-				
-			// 	ref = on["i"+index];
-				
-			// 	if(ref != null)
-			// 	{
-			// 		executeOnHandler(ref, index, total, clone, iref, val, cfg);
-			// 	}
-				
-			// 	ref = on.first;
-				
-			// 	if(ref != null && index == 0)
-			// 	{
-			// 		executeOnHandler(ref, index, total, clone, iref, val, cfg);
-			// 	}
-				
-			// 	ref = on.item;
-				
-			// 	if(ref != null)
-			// 	{
-			// 		executeOnHandler(ref, index, total, clone, iref, val, cfg);
-			// 	}
-				
-			// 	ref = on.last;
-				
-			// 	if(ref != null && ((index + 1) >= total))
-			// 	{
-			// 		executeOnHandler(ref, index, total, clone, iref, val, cfg);
-			// 	}
-				
-			// 	ref = on.odd;
-				
-			// 	if(ref != null && ((index + 1) % 2) == 1)
-			// 	{
-			// 		executeOnHandler(ref, index, total, clone, iref, val, cfg);
-			// 	}
-			// 	else
-			// 	{
-			// 		ref = on.even;
-					
-			// 		if(ref != null)
-			// 		{
-			// 			executeOnHandler(ref, index, total, clone, iref, val, cfg);
-			// 		}
-			// 	}
-			// };
-			
-			// var processListType = function (cfg, index, tag, curef, data)
-			// {
-			// 	var ecfg,
-			// 					val,
-			// 					each, i, l, ii, ll, itemA, itemB, iref, parent, pholder, templates, temps, curli, temp, curq, curqq, wrapper, opts, 
-			// 					on, onCfg, itype, inum, ifn;
-				
-			// 	/* initial setup of the domJQConfig
-			// 	   - remove the LI elements and use them as templates for when updating the list.
-			// 	   TODO add animation controls ability to fade in elements etc.
-			// 	   TODO add custom children selector
-			// 	   TODO add custom inner container selector where children are located
-			// 	   TODO add custom directives to collection of children
-			// 	   TODO add custom children templates for single and variation based on order or property within the data
-			// 	   TODO optimize DOM manipulation, manipulate DOM in memory first
-			// 	*/
-			// 	if(cfg.domJQConfig[index] == null)
-			// 	{
-			// 		/* here we query for lists children within the document or create them from a template */
-			// 		if(tag == "ul" && cfg.li == null)
-			// 		{
-			// 			temps = curef.children("li");
-			// 			templates = [];
-						
-			// 			for(ii = 0, ll = temps.length; ii < ll; ii++)
-			// 			{
-			// 				templates[templates.length] = {ref:temps[ii], qq:null};
-			// 			}
-			// 		}
-			// 		else if(cfg.li != null)
-			// 		{
-			// 			templates = [];
-						
-			// 			if(cfg.li instanceof Array)
-			// 			{
-			// 				for(i = 0, l = cfg.li.length; i < l; i++)
-			// 				{
-			// 					curli = cfg.li[i];
-								
-			// 					if(typeof(curli) == "object")
-			// 					{
-			// 						curq = curli.q;
-			// 						curqq = curli.qq;
-			// 					}
-			// 					else
-			// 					{
-			// 						curq = curli;
-			// 						curqq = null;
-			// 					}
-								
-			// 					if(curq.charAt(0) === "<" && curq.charAt( curq.length - 1 ) === ">" && curq.length >= 3)
-			// 					{
-			// 						templates[templates.length] = {ref:$(curq), qq:curqq};
-			// 					}
-			// 					else
-			// 					{
-			// 						temps = curef.find(curq);
-									
-			// 						if(temps.length > 0)
-			// 						{
-			// 							for(ii = 0, ll = temps.length; ii < ll; ii++)
-			// 							{
-			// 								templates[templates.length] = {ref:temps[ii], qq:curqq};
-			// 							}
-			// 						}
-			// 						else
-			// 						{
-			// 							/* TODO provide "developer" feedback that nothing was found */
-			// 						}
-			// 					}
-			// 				}
-			// 			}
-			// 			else
-			// 			{
-			// 				curli = cfg.li;
-							
-			// 				if(typeof(curli) == "object")
-			// 				{
-			// 					curq = curli.q;
-			// 					curqq = curli.qq;
-			// 				}
-			// 				else
-			// 				{
-			// 					curq = curli;
-			// 					curqq = null;
-			// 				}
-							
-			// 				if(curq.charAt(0) === "<" && curq.charAt( curq.length - 1 ) === ">" && curq.length >= 3)
-			// 				{
-			// 					templates[templates.length] = {ref:$(curq), qq:curqq};
-			// 				}
-			// 				else
-			// 				{
-			// 					temps = curef.find(curq);
-								
-			// 					if(temps.length > 0)
-			// 					{
-			// 						for(ii = 0, ll = temps.length; ii < ll; ii++)
-			// 						{
-			// 							templates[templates.length] = {ref:temps[ii], qq:curqq};
-			// 						}
-			// 					}
-			// 					else
-			// 					{
-			// 						/* TODO provide "developer" feedback that nothing was found */
-			// 					}
-			// 				}
-							
-			// 			}
-			// 		}
-					
-					
-			// 		ecfg = {items:[], type:0};
-					
-			// 		cfg.domJQConfig[index] = ecfg;
-					
-			// 		if(templates.length == 1)
-			// 		{
-			// 			ecfg.type = "single";
-						
-			// 			temp = templates[0];
-						
-			// 			if(temp.ref instanceof jQuery)
-			// 			{
-			// 				temp.ref = temp.ref.detach();
-							
-			// 				ecfg.items[0] = temp;
-			// 			}
-			// 			else
-			// 			{
-			// 				temp.ref = $(temp.ref).detach();
-							
-			// 				ecfg.items[0] = temp;
-			// 			}
-			// 		}
-			// 		else if(templates.length >= 2)
-			// 		{
-			// 			ecfg.type = "double";
-						
-			// 			temp = templates[0];
-						
-			// 			if(temp.ref instanceof jQuery)
-			// 			{
-			// 				temp.ref = temp.ref.detach();
-							
-			// 				ecfg.items[0] = temp;
-			// 			}
-			// 			else
-			// 			{
-			// 				temp.ref = $(temp.ref).detach();
-							
-			// 				ecfg.items[0] = temp;
-			// 			}
-						
-			// 			temp = templates[1];
-						
-			// 			if(temp instanceof jQuery)
-			// 			{
-			// 				temp.ref = temp.ref.detach();
-							
-			// 				ecfg.items[1] = temp;
-			// 			}
-			// 			else
-			// 			{
-			// 				temp.ref = $(temp.ref).detach();
-							
-			// 				ecfg.items[1] = temp;
-			// 			}
-						
-			// 			/* TODO process the two and figure the difference between them ? */
-						
-			// 			if(templates.length > 2)
-			// 			{
-			// 				for(i = 2, l = templates.length; i < l; i++)
-			// 				{
-			// 					temp = templates[i];
-								
-			// 					if(temp.ref instanceof jQuery)
-			// 					{
-			// 						temp.ref.remove();
-			// 					}
-			// 					else
-			// 					{
-			// 						$(temp.ref).remove();
-			// 					}
-			// 				}
-			// 			}
-			// 		}
-			// 		/* TODO finish more than 2 */
-			// 	}
-			// 	else
-			// 	{
-			// 		ecfg = cfg.domJQConfig[index];
-			// 	}
-				
-			// 	i = 0;
-			// 	l = data.length;
-			// 	pholder = $("<div />");
-				
-			// 	curef.replaceWith(pholder);
-				
-			// 	curef.empty();
-				
-			// 	itemA = ecfg.items[0];
-				
-			// 	if(cfg.on != null)
-			// 	{
-			// 		on = cfg.on;
-					
-			// 		if(on.value != null && (on.value instanceof Function))
-			// 		{
-			// 			bOnValue = true;
-			// 		}
-			// 		else
-			// 		{
-			// 			bOnValue = false;
-			// 		}
-					
-			// 		if(on.render != null && (on.render instanceof Function))
-			// 		{
-			// 			bOnRender = true;
-			// 		}
-			// 		else
-			// 		{
-			// 			bOnRender = false;
-			// 		}
-					
-			// 		/* process on config */
-			// 		if(cfg.onCfg == null)
-			// 		{
-			// 			onCfg = {n:{}, nint:{}};
-						
-			// 			cfg.onCfg = onCfg;
-						
-			// 			for(each in on)
-			// 			{
-			// 				if(each.charAt(0) == "n")
-			// 				{
-			// 					inum = each.substr(1);
-								
-			// 					if(inum == parseInt(inum))
-			// 					{
-			// 						ifn = on[each];
-									
-			// 						if(ifn != null)
-			// 						{
-			// 							onCfg.n[inum] = ifn;
-			// 							onCfg.nint[inum] = inum;
-			// 						}
-			// 					}
-			// 				}
-			// 			}
-			// 		}
-			// 		else
-			// 		{
-			// 			onCfg = cfg.onCfg;
-			// 		}
-			// 	}
-			// 	else
-			// 	{
-			// 		bOnValue = false;
-			// 		bOnRender = false;
-			// 	}
-				
-			// 	if(ecfg.type == "single")
-			// 	{
-			// 		for(; i < l; i++)
-			// 		{
-			// 			val = data[i];
-						
-			// 			/* retrieve the proper references from a 'template' of the list item */
-			// 			clone = itemA.ref;
-						
-			// 			if(itemA.qq != null)
-			// 			{
-			// 				if(itemA.qqref == null)
-			// 				{
-			// 					iref = clone.find(itemA.qq);
-			// 					itemA.qqref = iref;
-			// 				}
-			// 				else
-			// 				{
-			// 					iref = itemA.qqref;
-			// 				}
-			// 			}
-			// 			else
-			// 			{
-			// 				iref = clone;
-			// 			}
-						
-			// 			if(bOnValue)
-			// 			{
-			// 				val = cfg.on.value.call(null, i, l, val, cfg);
-			// 			}
-						
-			// 			setListItemValue(i, iref, cfg, val);
-						
-			// 			/* after applying modifications, clone the template and append to the list */
-			// 			clone = clone.clone();
-						
-			// 			if(cfg.on != null)
-			// 			{
-			// 				processOnHandlers(i, l, clone, iref, val, cfg);
-			// 			}
-						
-			// 			curef.append(clone);
-			// 		}
-			// 	}
-			// 	else if(ecfg.type == "double")
-			// 	{
-			// 		itemB = ecfg.items[1];
-					
-			// 		for(; i < l; i++)
-			// 		{
-			// 			val = data[i];
-						
-			// 			if(i % 2)
-			// 			{
-			// 				clone = itemB.ref;
-							
-			// 				if(itemB.qq != null)
-			// 				{
-			// 					if(itemB.qqref == null)
-			// 					{
-			// 						if(itemB.qq != null)
-			// 						{
-			// 							iref = clone.find(itemB.qq);
-			// 							itemB.qqref = iref;
-			// 						}
-			// 						else
-			// 						{
-			// 							iref = clone;
-			// 						}
-			// 					}
-			// 					else
-			// 					{
-			// 						iref = itemB.qqref;
-			// 					}
-			// 				}
-			// 				else
-			// 				{
-			// 					iref = clone;
-			// 				}
-			// 			}
-			// 			else
-			// 			{
-			// 				clone = itemA.ref;
-							
-			// 				if(itemA.qqref == null)
-			// 				{
-			// 					if(itemA.qq != null)
-			// 					{
-			// 						iref = clone.find(itemA.qq);
-			// 						itemA.qqref = iref;
-			// 					}
-			// 					else
-			// 					{
-			// 						iref = clone;
-			// 					}
-			// 				}
-			// 				else
-			// 				{
-			// 					iref = itemA.qqref;
-			// 				}
-			// 			}
-						
-			// 			if(bOnValue)
-			// 			{
-			// 				val = cfg.on.value.call(null, i, cfg, val);
-			// 			}
-						
-			// 			setListItemValue(i, iref, cfg, val);
-						
-			// 			/* after applying modifications, clone the template and append to the list */
-			// 			clone = clone.clone();
-						
-			// 			if(cfg.on != null)
-			// 			{
-			// 				processOnHandlers(i, l, clone, iref, val, cfg);
-			// 			}
-						
-			// 			curef.append(clone);
-			// 		}
-			// 	}
-				
-			// 	pholder.replaceWith(curef);
-				
-			// 	if(bOnRender)
-			// 	{
-			// 		cfg.on.render.call(null, l, curef, cfg);
-			// 	}
-			// };
+			this.on = on;
 			
 			/* Initializes the selector group */
 			var initGroup = function(cfg, grp)
@@ -1234,14 +615,23 @@ catch(e)
 				}
 			};
 			
-			/* Apply data */
-			var applyData = function (each, cfg, data, map, altMap)
+			/**
+			* Apply data on to a widget
+			* @uid selector uid
+			* @cfgso selector configuration object
+			* @data data to apply to selector widget
+			* @map data mapping
+			* @altMap alternative mapping
+			*/
+			var applyData = function (uid, cfgso, data, map, altMap)
 			{
-				var so, cfg, val, arr, i, l, curef, container, wdgt, wdgtCfg, gid, sid, transformer, tranfn, tranData;
+				var so, val, arr, i, l, curef, container, wdgt, wdgtCfg, gid, sid, transformer, tranfn, tranData;
 				
-				if(altMap != null && altMap[each] != null)
+				debugger;
+
+				if(altMap != null && altMap[uid] != null)
 				{
-					arr = altMap[each].split(".");
+					arr = altMap[uid].split(".");
 					
 					/* TODO OPTIMIZE - see if writing a javascript function into a string is better, whats faster? eval the string - or eval into a function for use later with apply or call */
 					curef = data;
@@ -1255,13 +645,13 @@ catch(e)
 				}
 				else
 				{
-					val = data[each];
+					val = data[uid];
 				}
 
 				/* apply transformer to data */
-				if(TRANSFORMERS[each] != null)
+				if(TRANSFORMERS[uid] != null)
 				{
-					transformer = TRANSFORMERS[each];
+					transformer = TRANSFORMERS[uid];
 
 					if(transformer.__ != null && typeof(transformer.__) == "function")
 					{
@@ -1273,26 +663,26 @@ catch(e)
 						}
 						catch(e)
 						{
-							throw new qq.Error("qq.view.applyData","Error executing transformer (id:" + each + ").\n" + e);
+							throw new qq.Error("qq.view", "applyData","Error executing transformer (id:" + uid + ").\n" + e);
 						}
 					}
 				}
 				
-				if(cfg.group == true)
+				if(cfgso.group == true)
 				{
-					var grp = GROUPS[cfg.gtype];
+					var grp = GROUPS[cfgso.gtype];
 					
 					if(grp != null && grp.cfg != null)
 					{
 						if(grp.cfg.set != null)
 						{
-							if(cfg.inited != true)
+							if(cfgso.inited != true)
 							{
-								initGroup(cfg, grp.cfg);
+								initGroup(cfgso, grp.cfg);
 							}
 							
 							/* this is where we set service data to a group configuration */
-							grp.cfg.set.call(grp.cfg, val, cfg.irefs, cfg.state, cfg.items);
+							grp.cfg.set.call(grp.cfg, val, cfgso.irefs, cfgso.state, cfgso.items);
 						}
 					}
 					else
@@ -1300,24 +690,21 @@ catch(e)
 						/* TODO ERROR - no group registered */
 					}
 				}
-				else if(cfg.dom != null)
+				else if(cfgso.dom != null)
 				{
-					/* TODO make it possible to do this without jQuery?? */
-					if((cfg.dom instanceof qq.$) && cfg.dom.length > 0)
+					if(qq.isNode(cfgso.dom) && cfgso.dom.length > 0)
 					{
-						if(cfg.domqq != null && (cfg.domqq instanceof qq.$) && cfg.domqq.length > 0)
+						if(cfgso.domqq != null && qq.isNode(cfgso.domqq) && cfgso.domqq.length > 0)
 						{
-							container = cfg.domqq;
+							container = cfgso.domqq;
 						}
 						else
 						{
-							container = cfg.dom;
+							container = cfgso.dom;
 						}
 						
-						wdgt = WIDGETS[cfg.type];
+						wdgt = WIDGETS[cfgso.type];
 						
-						//debugger;
-
 						if(wdgt != null && wdgt.cfg != null)
 						{
 							wdgtCfg = wdgt.cfg;
@@ -1329,53 +716,62 @@ catch(e)
 								if(wdgt.hasSelectors == true && transformer != null)
 								{
 									/* at this point we pass a transformer into the set method of a widget */
-									wdgtCfg.set(container, val, cfg, transformer);
+									wdgtCfg.set(container, val, cfgso, transformer);
 								}
 								else
 								{
-									wdgtCfg.set(container, val, cfg);
+									wdgtCfg.set(container, val, cfgso);
 								}
 							}
 						}
 					}
 				}
-			};
+			}; /* end applyData method */
 
+			/**
+			* Set data on to a selector widget
+			* @uid selector uid
+			* @data data load
+			* @map is a data mapping type (dataMap in selector attribute)
+			* @altMap is an alternative mapping for the data
+			*/
 			var setWidgetData = function (uid, data, map, altMap)
 			{
 				if(SELECTOR[uid] != null)
 				{
 					/* selector object */
-					var so = SELECTOR[uid];
+					var so = SELECTOR[uid],
+						cfgso;
 					
 					/* if the selector is a group (concept) */
 					if(so.group != false)
 					{
-						cfg = so;
+						cfgso = so;
 					}
 					else
 					{
-						cfg = so.cfg;
+						cfgso = so.selector;
 					}
 
-					/* Apply Data accepts a data object */
+					/* Apply Data accepts a data object, create it here */
 					var dta = {};
 						dta[uid] = data;
 
-					//debugger;
-					applyData(uid, cfg, dta, map, altMap);
+					/* cfgso :
+						{id, path, items: ncfg, group: true, irefs: {}}
+						{id, path, selector: ncfg, group: false}
+					*/
+					applyData(uid, cfgso, dta, map, altMap);
 				}
 			};
 			this.setWidgetData = setWidgetData;
 
 			/* Sets data to a widget or group */
-			this.setData = function (data, map, altMap)
+			var setData = function (data, map, altMap)
 			{
 				console.log("* Set Data", "data", data, "map", map, "altMap", altMap);
 
-				//debugger;
-
-				var so, cfg, val, arr, i, l, curef, container, wdgt, gid, sid;
+				var so, cfgso, val, arr, i, l, curef, container, wdgt, gid, sid;
 				
 				if(arguments.length == 1)
 				{
@@ -1386,7 +782,7 @@ catch(e)
 				{
 					for(var each in data)
 					{
-						cfg = null;
+						cfgso = null;
 						
 						if(each.indexOf(".") != -1)
 						{
@@ -1416,7 +812,7 @@ catch(e)
 							{
 								if(so.items[sid] != null)
 								{
-									cfg = so.items[sid];
+									cfgso = so.items[sid];
 								}
 								else
 								{
@@ -1436,21 +832,20 @@ catch(e)
 								
 								if(so.group != false)
 								{
-									cfg = so;
+									cfgso = so;
 								}
 								else
 								{
-									cfg = so.cfg;
+									cfgso = so.cfg;
 								}
 							}
 						}
 						
-						//console.group("ApplyData");
-						applyData(each, cfg, data, map, altMap);
-						//console.groupEnd();
+						applyData(each, cfgso, data, map, altMap);
 					}
 				}
 			};
+			this.setData = setData;
 			
 			var getSelectorData = function (cfg, scope)
 			{
@@ -1459,9 +854,9 @@ catch(e)
 				if((WIDGETS[cfg.type] != null && WIDGETS[cfg.type].cfg != null && WIDGETS[cfg.type].cfg.get != null) && cfg.dom != null)
 				{
 					/* TODO make it possible to do this without jQuery?? */
-					if((cfg.dom instanceof qq.$) && cfg.dom.length > 0)
+					if(qq.isNode(cfg.dom) && cfg.dom.length > 0)
 					{
-						if(cfg.domqq != null && (cfg.domqq instanceof qq.$) && cfg.domqq.length > 0)
+						if(cfg.domqq != null && qq.isNode(cfg.domqq) && cfg.domqq.length > 0)
 						{
 							container = cfg.domqq;
 						}
@@ -1550,13 +945,16 @@ catch(e)
 				}
 			};
 			
-			this.configure = function (uid)
+			/**
+			* Configures the view.
+			*/
+			var configure = function (uid)
 			{
 				if(bConfigured != true)
 				{
 					if(viewUID != uid)
 					{
-						throw new qq.Error("qq.View.configure: Incorrect view uid (uid:" + uid + ").");
+						throw new qq.Error("qq.View", "configure", "Incorrect view uid (uid:" + uid + ").");
 					}
 					
 					processTriggers.call(this);
@@ -1570,46 +968,49 @@ catch(e)
 					bConfigured = true;
 				}
 			};
+			this.configure = configure;
 			
+			/**
+			* Initializes the triggers within the view.
+			*/
 			var initTriggers = function ()
 			{
-				var cfg,
-						ref, refqq, del;
+				var cfgtr, ref, refqq, del;
 				
 				for(var each in TRIGGERS)
 				{
-					cfg = TRIGGERS[each];
+					cfgtr = TRIGGERS[each];
 					
-					ref = viewDOM.find(cfg.q);
+					ref = viewDOM.find(cfgtr.q);
 					
-					if(cfg.qq != null && cfg.qq.length > 0)
+					if(cfgtr.qq != null && cfgtr.qq.length > 0)
 					{
-						refqq = ref.find(cfg.qq);
+						refqq = ref.find(cfgtr.qq);
 						
 						if(refqq.length > 0)
 						{
-							cfg.dom = ref;
-							cfg.domqq = refqq;
+							cfgtr.dom = ref;
+							cfgtr.domqq = refqq;
 						}
 						else
 						{
-							throw new qq.Error("qq.View.initTriggers: Couldn't find sub selector (qq:" + cfg.qq + ") for (trigger:" + each + "), view id (id:" + viewID + "), module id (id:" + modID + ").");
+							throw new qq.Error("qq.View", "initTriggers", "Couldn't find sub selector (qq:" + cfgtr.qq + ") for (trigger:" + each + "), view id (id:" + viewID + "), module id (id:" + modID + ").");
 						}
 					}
 					else
 					{
 						if(ref.length > 0)
 						{
-							cfg.dom = ref;
-							cfg.domqq = null;
+							cfgtr.dom = ref;
+							cfgtr.domqq = null;
 						}
 						else
 						{
-							throw new qq.Error("qq.View.initTriggers: Couldn't find a trigger (q:" + cfg.q + ") for (trigger:" + each + "), view id (id:" + viewID + "), module id (id:" + modID + ").");
+							throw new qq.Error("qq.View", "initTriggers", "Couldn't find a trigger (q:" + cfgtr.q + ") for (trigger:" + each + "), view id (id:" + viewID + "), module id (id:" + modID + ").");
 						}
 					}
 					
-					if(cfg.action != null && cfg.action.length > 0)
+					if(cfgtr.action != null && cfgtr.action.length > 0)
 					{
 						del = function (e)
 						{
@@ -1639,16 +1040,16 @@ catch(e)
 						};
 						
 						del.ref = this;
-						del.action = cfg.action;
-						del.preventDefault = cfg.preventDefault;
+						del.action = cfgtr.action;
+						del.preventDefault = cfgtr.preventDefault;
 						
-						if(cfg.domqq != null)
+						if(cfgtr.domqq != null)
 						{
-							cfg.domqq.on("click", del);
+							cfgtr.domqq.on("click", del);
 						}
 						else
 						{
-							cfg.dom.on("click", del);
+							cfgtr.dom.on("click", del);
 						}
 					}
 				}
@@ -1658,9 +1059,9 @@ catch(e)
 			/**
 			* Used to initialize a widget
 			*/
-			var processWidget_init = function (container, cfg)
+			var processWidget_init = function (container, cfgsel)
 			{
-				var wdgt = WIDGETS[cfg.type];
+				var wdgt = WIDGETS[cfgsel.type];
 
 				if(wdgt != null && wdgt.cfg != null)
 				{
@@ -1669,51 +1070,53 @@ catch(e)
 					if(wdgt.init != null)
 					{
 						/* this is where we set service data to a widget */
-						wdgt.init(container, cfg, GROUPS);
+						wdgt.init(container, cfgsel, GROUPS);
 					}
 				}
 			};
 			
-			/* performs query selection and establishes the dom & domqq references within the view */
-			var initSelector = function (id, cfg)
+			/**
+			* Performs query selection and establishes the dom & domqq references within the view
+			*/
+			var initSelector = function (id, cfgsel)
 			{
 				var ref, refqq;
 				
-				ref = viewDOM.find(cfg.q);
+				ref = viewDOM.find(cfgsel.q);
 				refqq = null;
 				
-				if(cfg.qq != null && cfg.qq.length > 0)
+				if(cfgsel.qq != null && cfgsel.qq.length > 0)
 				{
-					refqq = ref.find(cfg.qq);
+					refqq = ref.find(cfgsel.qq);
 					
 					if(refqq.length > 0)
 					{
-						cfg.dom = ref;
-						cfg.domqq = refqq;
+						cfgsel.dom = ref;
+						cfgsel.domqq = refqq;
 						
-						processWidget_init(refqq, cfg);
-
+						processWidget_init(refqq, cfgsel);
+						
 						return refqq;
 					}
 					else
 					{
-						throw new qq.Error("qq.View.initSelector: Couldn't find sub selector (qq:" + cfg.qq + ") for (selector:" + id + "), view id (id:" + viewID + "), module id (id:" + modID + ").");
+						throw new qq.Error("qq.View", "initSelector", "Couldn't find sub selector (qq:" + cfgsel.qq + ") for (selector:" + id + "), view id (id:" + viewID + "), module id (id:" + modID + ").");
 					}
 				}
 				else
 				{
 					if(ref.length > 0)
 					{
-						cfg.dom = ref;
-						cfg.domqq = null;
+						cfgsel.dom = ref;
+						cfgsel.domqq = null;
 						
-						processWidget_init(ref, cfg);
+						processWidget_init(ref, cfgsel);
 
 						return ref;
 					}
 					else
 					{
-						throw new qq.Error("qq.View.initSelector: Couldn't find a selector (q:" + cfg.q + ") for (selector:" + id + "), view id (id:" + viewID + "), module id (id:" + modID + ").");
+						throw new qq.Error("qq.View", "initSelector", "Couldn't find a selector (q:" + cfgsel.q + ") for (selector:" + id + "), view id (id:" + viewID + "), module id (id:" + modID + ").");
 					}
 				}
 			};
@@ -1739,9 +1142,7 @@ catch(e)
 			var initSelectors = function ()
 			{
 				/* so - selector object */
-				var so, cfg, grp,
-						ref, refqq,
-						eachA, eachB, stype, stcount, sttotal;
+				var so, cfgsel, grp, ref, refqq, eachA, eachB, stype, stcount, sttotal;
 				
 				for(eachA in SELECTOR)
 				{
@@ -1749,6 +1150,7 @@ catch(e)
 					
 					if(so.group == true)
 					{
+						//debugger;
 						stcount = 0;
 						sttotal = 0;
 						stype = null;
@@ -1756,21 +1158,21 @@ catch(e)
 						/* initialize group's selectors */
 						for(eachB in so.items)
 						{
-							cfg = so.items[eachB];
+							cfgsel = so.items[eachB];
 							
 							sttotal++;
 							/* see if all the types within the group are the same as the first */
 							if(stype == null)
 							{
-								stype = cfg.type;
+								stype = cfgsel.type;
 								stcount++;
 							}
-							else if(stype == cfg.type)
+							else if(stype == cfgsel.type)
 							{
 								stcount++;
 							}
 							
-							so.irefs[eachB] = initSelector(eachB, cfg);
+							so.irefs[eachB] = initSelector(eachB, cfgsel);
 						}
 						
 						/* all the types in the group are the same, therefor set the group type */
@@ -1799,26 +1201,29 @@ catch(e)
 					}
 					else
 					{
-						initSelector(eachA, so.cfg);
+						//debugger;
+						initSelector(eachA, so.selector);
 					}
 				}
 			};
 			
 			/**
-			* Initializes the view.
+			* Initializes the qq.View.
+			* @uid view unique identifier
+			* @domNode is the view node
 			*/
-			this.init = function (uid, ref)
+			var init = function (uid, domNode)
 			{
-				console.log("** INIT VIEW");
-				debugger;
+				console.log("** qq.View.init");
+				
 				if(bInited != true)
 				{
 					if(viewUID != uid)
 					{
-						throw new qq.Error("qq.View.init: Incorrect view uid (uid:" + uid + ").");
+						throw new qq.Error("qq.View", "init", "Incorrect view uid (uid:" + uid + ").");
 					}
 					
-					viewDOM = ref;
+					viewDOM = domNode;
 					
 					initTriggers.call(this);
 					initSelectors.call(this);
@@ -1831,9 +1236,6 @@ catch(e)
 					for(var each in DEFAULTS)
 					{
 						def = DEFAULTS[each];
-
-						//def.dataMap
-						//def.data
 
 						if(def.data != null)
 						{
@@ -1856,6 +1258,7 @@ catch(e)
 					bInited = true;
 				}
 			};
+			this.init = init;
 
 			this.actions = ACTIONS;
 			
@@ -1866,7 +1269,7 @@ catch(e)
 
 	if(_isNode == false)
 	{
-		registerView();
+		registerView(qq);
 		// Registry = require('./qq.Registry.js').Registry;
 
 
