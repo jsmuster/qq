@@ -3,7 +3,7 @@ QQ is a development platform for building highly modular, maintainable applicati
 
 QQ is comprised of concepts easily understood by any programmer.
 
-QQ is isomorphic and WORA capable. It's a cross-platform "write once, run anywhere" program. A module written with QQ works on desktop, mobile, web, NodeJS environments and as a browser extension.
+QQ is isomorphic and WORA capable. It's a cross-platform "write once, run anywhere" program. A module written with QQ works on the web, mobile, NodeJS environments and as a browser extension.
 
 Main focus of QQ is quick application development and deployment. 
 
