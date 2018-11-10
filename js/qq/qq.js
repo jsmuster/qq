@@ -510,7 +510,7 @@ catch(e)
 			    	}
 			    	else
 			    	{
-			    		console.log(str);
+			    		console.log("%c " + str, "color: white; background: grey; padding: 2px; font-size: 12px;");
 			    	}
 			    	
 			        str = "";
@@ -598,6 +598,9 @@ catch(e)
 		
 				STATEHANDLERS = {absolute:{}, relative:{}},
 				CURRSTATE,
+
+				/* application state that gets loaded initially */
+				APPSTATE = null,
 				
 				CONFIG = {}, /* application configuration */
 
@@ -627,7 +630,7 @@ catch(e)
 		*/
 		var appendToContainer = function (ref)
 		{
-			debugger;
+			//debugger;
 			if(CONTAINERINNER != null && CONTAINERINNER.append)
 			{
 				CONTAINERINNER.append(ref);
@@ -719,7 +722,7 @@ catch(e)
 			},
 			onDoneView: function (mID, pObj, data)
 			{
-				console.log("* DATA ", data);
+				console.log("* ["+mID+"] view ", data);
 
 				//var mID = arguments.callee.id,
 				var	cfgm = MODULES[mID];
@@ -1241,7 +1244,7 @@ catch(e)
 	          }
 	          
 	        });
-	
+			//debugger;
 			qq.ed.addEvent("app.state", eMMAppState);
 	
 	
@@ -1683,6 +1686,7 @@ catch(e)
 			{
 				if(cfgm.viewNode != null)
 				{
+					/* TODO convert xml to string upon load */
 					/* generate the view string out of the module's view node */
 					if(cfgm.viewString == null)
 					{
@@ -1701,25 +1705,47 @@ catch(e)
 					if(cfgm.viewString != null)
 					{
 						console.log("qq.init: (5-c) add view string to container.");
-
-						/**
-						 * View configuration after adding to main module container
-						 * returns an object {content, uid, wrapper, type};
-						 * type - container type
-						 */
-						vcfg = addToContainer(cfgm.viewString);
-						/* TODO figure out if we need to add the view string into the main app container, perhaps do it after all the widgets are built */
 						
-						/* content is a node of the view */
-						cfgm.view = vcfg.content;
+						if(APPSTATE != null && APPSTATE.mods[mid] != null && APPSTATE.mods[mid].view != null)
+						{
+							var modstate = APPSTATE.mods[mid];
 
-						/* uid is also the .id attribute */
-						cfgm.viewUID = vcfg.uid;
+							//modstate.views;
+							// 
+							// modstate.viewUid
 
-						/* TODO figure out if we need a view wrapper to begin with */
-						/* view wrapper node */
-						cfgm.viewWrapper = vcfg.wrapper;
-						
+							// view.selectors
+							/* content is a node of the view */
+							cfgm.view = qq.place(modstate.view);
+
+							/* uid is also the .id attribute */
+							cfgm.viewUID = modstate.viewUID;
+
+							/* TODO figure out if we need a view wrapper to begin with */
+							/* view wrapper node */
+							cfgm.viewWrapper = qq.place(modstate.viewWrapper);
+						}
+						else
+						{
+							/**
+						 	 * View configuration after adding to main module container
+							 * returns an object {content, uid, wrapper, type};
+							 * type - container type
+							 */
+							vcfg = addToContainer(cfgm.viewString);
+							/* TODO figure out if we need to add the view string into the main app container, perhaps do it after all the widgets are built */
+							
+							/* content is a node of the view */
+							cfgm.view = vcfg.content;
+
+							/* uid is also the .id attribute */
+							cfgm.viewUID = vcfg.uid;
+
+							/* TODO figure out if we need a view wrapper to begin with */
+							/* view wrapper node */
+							cfgm.viewWrapper = vcfg.wrapper;
+						}
+
 						/* initialize the module prior to showing it, assign the 'resHandler' if a function was returned from the 'init' method. */
 						
 						//console.log("* initialize the module prior to showing it", cfgm, cfg.ref);
@@ -1728,6 +1754,10 @@ catch(e)
 						/* ref is the module reference */
 						if(cfgm.ref.init != null)
 						{
+							//APPSTATE
+							//APPSTATE.lastModule
+							//APPSTATE.mods
+
 							var fn = cfgm.ref.init(cfgm.uid, cfgm.args, cfgm.viewWrapper);
 							
 							if(fn != null && typeof(fn) == "function")
@@ -1928,310 +1958,6 @@ catch(e)
 
 		
 
-		var qq$;
-
-		/* QQ$ */
-		(function () {
-
-			/* TRAVERSING */
-			/**
-			* Create a new jQuery object with elements added to the set of matched elements.
-			*/
-			var add = function ()
-			{
-
-			};
-
-			/**
-			* Get the children of each element in the set of matched elements, optionally filtered by a selector.
-			*/
-			var children = function ()
-			{
-				
-			};
-
-			/**
-			* Get the children of each element in the set of matched elements, including text and comment nodes.
-			*/
-			var contents = function ()
-			{
-				
-			};
-
-			/**
-			* Get the descendants of each element in the current set of matched elements, filtered by a selector, jQuery object, or element.
-			*/
-			var find = function ()
-			{
-				
-			};
-
-			/* MANIPULATION CSS */
-
-			/**
-			* Adds the specified class(es) to each element in the set of matched elements.
-			*/
-			var addClass = function ()
-			{
-
-			};
-			
-
-			/* MANIPULATION DOM */
-			
-			/**
-			* Insert content, specified by the parameter, to the end of each element in the set of matched elements.
-			*/
-			var append = function ()
-			{
-				
-			};
-			
-			/**
-			* Insert every element in the set of matched elements to the end of the target.
-			*/
-			var appendTo = function ()
-			{
-				
-			};
-			
-			/**
-			* Insert content, specified by the parameter, before each element in the set of matched elements.
-			*/
-			var before = function ()
-			{
-				
-			};
-
-			/**
-			* Remove the set of matched elements from the DOM.
-			*/
-			var detach = function ()
-			{
-				
-			};
-
-			/**
-			* Remove all child nodes of the set of matched elements from the DOM.
-			*/
-			var empty = function ()
-			{
-				
-			};
-
-			var html = function ()
-			{
-				
-			};
-
-			/* MANIPULATION > STYLE PROPERTIES */
-
-			var css = function ()
-			{
-				
-			};
-
-			/* MANIPULATION ATTRIBUTES */
-
-			var attr = function ()
-			{
-				
-			};
-
-			/* MISC > DATA STORAGE */
-
-			var data = function ()
-			{
-				
-			};
-
-
-			/* returns length */
-			var length = function ()
-			{
-
-			};
-
-			var load = function ()
-			{
-
-			};
-
-			var map = function ()
-			{
-
-			};
-
-			var parent = function ()
-			{
-
-			};
-
-			var promise = function ()
-			{
-
-			};
-
-			var prop = function ()
-			{
-
-			};
-
-			/**
-			* Specify a function to execute when the DOM is fully loaded.
-			*/
-			var ready = function ()
-			{
-
-			};
-
-			/**
-			* Remove the set of matched elements from the DOM.
-			*/
-			var remove = function ()
-			{
-
-			};
-
-			var removeAttr = function ()
-			{
-
-			};
-
-			var removeClass = function ()
-			{
-
-			};
-
-			var removeData = function ()
-			{
-
-			};
-
-			var removeProp = function ()
-			{
-
-			};
-
-			var replaceAll = function ()
-			{
-
-			};
-
-			var replaceWidth = function ()
-			{
-
-			};
-
-			var size = function ()
-			{
-
-			};
-
-			var slice = function ()
-			{
-
-			};
-
-			var text = function ()
-			{
-
-			};
-
-			var val = function ()
-			{
-
-			};
-
-			var width = function ()
-			{
-
-			};
-
-			var height = function ()
-			{
-
-			};
-
-			var wrapInner = function ()
-			{
-
-			};
-			
-			qq$ = function ()
-			{
-
-				var fn$ = function ()
-				{
-
-				};
-
-				/* all the functions inside */
-				
-				fn$.add = add;
-				fn$.children = children;
-				fn$.contents = contents;
-				fn$.find = find;
-
-				fn$.addClass = addClass;
-				fn$.append = append;
-				fn$.appendTo = appendTo;
-				fn$.before = before;
-				fn$.detach = detach;
-				fn$.empty = empty;
-				fn$.html = html;
-				
-
-				fn$.css = css;
-
-				fn$.attr = attr;
-
-				fn$.data = data;
-
-				fn$.length = length;
-
-				fn$.load = load;
-
-				fn$.map = map;
-
-				fn$.parent = parent;
-
-				fn$.promise = promise;
-
-				fn$.prop = prop;
-
-				fn$.ready = ready;
-
-				fn$.remove = remove;
-
-				fn$.removeAttr = removeAttr;
-
-				fn$.removeClass = removeClass;
-
-				fn$.removeData = removeData;
-
-				fn$.removeProp = removeProp;
-
-				fn$.replaceAll = replaceAll;
-
-				fn$.replaceWidth = replaceWidth;
-
-				fn$.size = size;
-
-				fn$.slice = slice;
-
-				fn$.text = text;
-
-				fn$.val = val;
-
-				fn$.width = width;
-				fn$.height = height;
-
-				return fn$;
-			};
-
-		}).apply({});
-
 		/**
 		* Checks if an object is a qq.$ node. Also acts as another function when nothing is passed into it, as a way to tell if we are running in a nodeJS environment.
 		*/
@@ -2253,6 +1979,186 @@ catch(e)
 				}
 			}
 		};
+
+
+		/**
+		* Return an array of concatenated elements by calling fn(x, i) for each element x and each index i in the array xs.
+		* When fn(x, i) returns an array, its result will be concatenated with the result array. If fn(x, i) returns anything else, that value will be pushed onto the end of the result array.
+		*/
+		var concatMap = function (xs, fn)
+		{
+		    var res = [];
+
+		    for (var i = 0; i < xs.length; i++)
+		    {
+		        var x = fn(xs[i], i);
+		        
+		        if(isArray(x))
+	        	{
+	        		res.push.apply(res, x);
+	        	}
+		        else
+	        	{
+	        		res.push(x);
+	        	}
+		    }
+		    return res;
+		};
+
+		var isArray = Array.isArray || function (xs)
+		{
+		    return Object.prototype.toString.call(xs) === '[object Array]';
+		};
+
+		/**
+		* Deep clones an object.
+		*/
+		var clone = function (from, to)
+		{
+		    if (from == null || typeof from != "object") return from;
+		    if (from.constructor != Object && from.constructor != Array) return from;
+		    if (from.constructor == Date || from.constructor == RegExp || from.constructor == Function ||
+		        from.constructor == String || from.constructor == Number || from.constructor == Boolean)
+		        return new from.constructor(from);
+
+		    to = to || new from.constructor();
+
+		    for (var name in from)
+		    {
+		        to[name] = typeof to[name] == "undefined" ? clone(from[name], null) : to[name];
+		    }
+
+		    return to;
+		};
+
+		/**
+		* Helps execute a transformer.
+		* Has 2 signatures: (TRANSFORMERS, uid, val) & (TRANSFORMER, val)
+		*/
+		var transformer = function (TRANSFORMERS, uid, val)
+		{
+			if(arguments.length == 3)
+			{
+				if(TRANSFORMERS[uid] != null)
+				{
+					var trans = TRANSFORMERS[uid];
+					
+					if(trans != null && trans.__ != null && typeof(trans.__) == "function")
+					{
+						tranfn = trans.__;
+
+						try
+						{
+							return tranfn(val);
+						}
+						catch(e)
+						{
+							throw new qq.Error("qq", "transformer","Error executing transformer (id:" + uid + ").\n" + e);
+						}
+					}
+					else if(typeof(trans) == "function")
+					{
+						try
+						{
+							return trans(val);
+						}
+						catch(e)
+						{
+							throw new qq.Error("qq", "transformer","Error executing transformer (id:" + uid + ").\n" + e);
+						}
+					}
+					else
+					{
+						return val;
+					}
+				}
+				else
+				{
+					return val;
+				}
+			}
+			else if(arguments.length == 2)
+			{
+				val = arguments[1];
+
+				var trans = TRANSFORMERS, tranfn;
+
+				if(trans != null && trans.__ != null && typeof(trans.__) == "function")
+				{
+					tranfn = trans.__;
+
+					try
+					{
+						return tranfn(val);
+					}
+					catch(e)
+					{
+						throw new qq.Error("qq", "transformer","Error executing transformer (id:" + uid + ").\n" + e);
+					}
+				}
+				else if(typeof(trans) == "function")
+				{
+					try
+					{
+						return trans(val);
+					}
+					catch(e)
+					{
+						throw new qq.Error("qq", "transformer","Error executing transformer (id:" + uid + ").\n" + e);
+					}
+				}
+				else
+				{
+					return val;
+				}
+			}
+			else
+			{
+				return null;
+			}
+		};
+
+		/**
+		* Retrieves Application State. This procedure goes through every module, every view in each module; it retrieves the data & HTML Node reference for every selector.
+		* The selector is then processed against the main application document to figure out a re-initialization path.
+		*/
+		var getApplicationState = function ()
+		{
+			var cfgm,
+				mods = {},
+				modstate;
+
+			for(var each in MODULES)
+			{
+				cfgm = MODULES[each];
+
+				modstate = cfgm.ref.getState();
+
+				if(cfgm.view != null)
+				{
+					modstate.view = qq.place(cfgm.view);
+					modstate.viewUID = cfgm.viewUID;
+					modstate.viewWrapper = qq.place(cfgm.viewWrapper);
+				}
+				
+				//mods[each] = {mstate: modstate};
+				mods[each] = modstate;
+			}
+			
+			var state = {lastModule: lastModule, mods: mods};
+			
+			return state;
+		};
+
+		var setApplicationConfig = function (state)
+		{
+			APPSTATE = state;
+		};
+
+		var getApplicationConfig = function ()
+		{
+			return APPSTATE;
+		}
 
 		/**
 		* Sets up the global container reference, where the modules will render themselves.
@@ -2299,6 +2205,96 @@ catch(e)
 				}
 			}
 		};
+
+		/**
+		* Returns a string representing the placing for a given element in a document.
+		* The element has to be a part of the document.
+		*/
+		var getPlace = function (element)
+		{
+			if(qq.isNode(element) == true)
+			{
+				var hfrags = [],
+				node = element,
+				pnode,
+				children, i, l,
+				index;
+
+				/* find 'node' in parent's children & capture the index all the way to body */
+				while(node.parent() != null && node.parent().length > 0)
+				{
+					pnode = node.parent();
+
+					children = pnode.children();
+
+					/* go through the children and figure out current node index */
+					for(i = 0, l = children.length; i < l; i++)
+					{
+						/* capture index if node is same as one of it's parents children */
+						if(node[0] == children[i])
+						{
+							index = i;
+
+							/* add index to hierarchy frags - a path to be used finding the node */
+							hfrags.unshift(index);
+							node = pnode;
+
+							break;
+						}
+					}
+				}
+
+				return hfrags;
+			}
+			else
+			{
+				//debugger;
+
+				var html = qq.$.find('html');
+
+				if(html != null)
+				{
+					html = qq.$(html);
+				}
+
+				var placement = element,
+					place, children, node = html;
+
+				for(var i = 0, l = placement.length; i < l; i++)
+				{
+					place = placement[i];
+
+					if(node != null && typeof(node.children) == "function")
+					{
+						children = node.children();
+
+						if(children[place] != null)
+						{
+							node = qq.$(children[place]);
+						}
+						else
+						{
+							node = null;
+							break;
+						}
+					}
+					else
+					{
+						node = null;
+						break;
+					}
+				}
+
+				if(node != null)
+				{
+					return node;
+				}
+				else
+				{
+					return null;
+				}
+			}
+		};
 		
 		/**
 		* Initialize QQ
@@ -2312,6 +2308,16 @@ catch(e)
 			if(bInited != true)
 			{
 				initialArgs = args;
+
+				if(_isNode == false)
+				{
+					if(window.__qqstate != null)
+					{
+						setApplicationConfig(window.__qqstate);
+
+						//window.__qqstate = null;
+					}
+				}
 				
 				if(qq.UIDGenerator == null)
 				{
@@ -2459,10 +2465,12 @@ catch(e)
 		registerWidget.group = registerWidgetGroup;
 
 		var scope = this;
-		
+
 		var qqRef = {loadModule: loadModule.bind(scope), 
 					init: init.bind(scope),
+
 					configure: configure.bind(scope),
+					configuration: configure.bind(scope),
 					
 					registerModule: registerModule.bind(scope),
 					registerWidget: registerWidget.bind(scope),
@@ -2484,6 +2492,7 @@ catch(e)
 					parseURL: parseURL.bind(scope),
 					
 					transform:transformValue.bind(scope),
+					transformer: transformer.bind(scope),
 					
 					//initBootstrap: initBootstrap,
 					
@@ -2500,13 +2509,43 @@ catch(e)
 					Error: errr.bind(scope),
 					Node: QQNode.bind(scope),
 					node: QQNode.bind(scope),
-					isNode: isNode.bind(scope)//,
+					isNode: isNode.bind(scope),
+
+					concatMap: concatMap.bind(scope),
+					
+					getState: getApplicationState.bind(scope),
+
+					setConfig: setApplicationConfig.bind(scope),
+					getConfig: getApplicationConfig.bind(scope),
+
+					place: getPlace.bind(scope),
+
+					clone: clone.bind(scope)
 
 					//$: qq$
 				};
 
+		qqRef.configuration.access = configureAccess;
 		qqRef.configure.access = configureAccess;
 		//console.log("configure", qqRef.configure.access)
+		//debugger;
+
+		if(_isNode == false)
+		{
+			try
+			{
+				
+
+				if(jQuery != null)
+				{
+					qqRef.$ = jQuery;
+				}
+			}
+			catch(e)
+			{
+				throw new Error("Missing JQuery");
+			}
+		}
 
 		var fnQQRef = function ()
 		{
@@ -2521,7 +2560,7 @@ catch(e)
 
 		return fnQQRef;
 
-	}); /* end qq function */
+	}); /* end createQQ qq function */
 
 	var qq = createQQ();
 	
@@ -2544,8 +2583,8 @@ catch(e)
 		module.exports = qq;
 	}
 
-	console.log("jQ");
+	//console.log("jQ");
 	//console.log("jQuery", jQuery);
-	console.log(" :end: - injected qq.js");
+	//console.log(" :end: - injected qq.js");
 
 }).apply(this, qq);

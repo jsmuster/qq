@@ -22,6 +22,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
+console.log("- injected qq.module.js");
+
 try
 {
 	if(qq == null)
@@ -157,29 +159,29 @@ catch(e)
 					}
 					else
 					{
-						var cfg = {},
+						var cfgv = {},
 							uid = UIDGen.generate();
 						
 						var viewRef = new qq.View(modID, id, uid, this, WIDGETS, GROUPS);
 						
 						/* qq.View reference */
-						cfg.ref = viewRef;
+						cfgv.ref = viewRef;
 						
 						/* view query selector */
-						cfg.qsel = qsel;
+						cfgv.qsel = qsel;
 						
 						/* newly generated uid */
-						cfg.uid = uid;
+						cfgv.uid = uid;
 						
 						/* view id */
-						cfg.id = id;
+						cfgv.id = id;
 
 						/* module id */
-						cfg.mid = modID;
+						cfgv.mid = modID;
 						
-						VIEWS[id] = cfg;
+						VIEWS[id] = cfgv;
 						
-						return cfg.ref;
+						return cfgv.ref;
 					}
 				}
 				else
@@ -188,6 +190,7 @@ catch(e)
 				}
 			};
 			this.registerView = registerView;
+			this.regview = registerView;
 			
 			var setView = function (id)
 			{
@@ -207,7 +210,8 @@ catch(e)
 							
 							cfg.ref.on("pre.hide");
 
-							cfg.dom.css("visibility", "hidden");
+							cfg.dom.css("display", "none");
+							//cfg.dom.css("visibility", "hidden");
 
 							cfg.ref.on("post.hide");
 						}
@@ -224,7 +228,8 @@ catch(e)
 
 						//cfg.uid;
 						//cfg.dom.show();
-						cfg.dom.css("visibility", "visible");
+						cfg.dom.css("display", "block");
+						//cfg.dom.css("visibility", "visible");
 
 						// qq.view
 						cfg.ref.on("post.show");
@@ -238,7 +243,7 @@ catch(e)
 				}
 				else
 				{
-					throw new qq.Error("qq.Module.setView: Invalid view id - (id:" + id + ").");
+					throw new qq.Error("qq.Module", "setView", "Invalid view id - (id:" + id + ").");
 				}
 			};
 			this.setView = setView;
@@ -249,7 +254,7 @@ catch(e)
 				{
 					if(VIEWS[id] == null)
 					{
-						throw new qq.Error("qq.Module.getView: View configuration under (id:" + id + ") isn't registered.");
+						throw new qq.Error("qq.Module", "getView", "View configuration under (id:" + id + ") isn't registered.");
 					}
 					else
 					{
@@ -258,10 +263,10 @@ catch(e)
 				}
 				else
 				{
-					throw new qq.Error("qq.Module.getView: Invalid view id - (id:" + id + ").");
+					throw new qq.Error("qq.Module", "getView", "Invalid view id - (id:" + id + ").");
 				}
 			};
-			var getView = this.getView;
+			this.getView = getView;
 			
 			/**** SERVICE ****/
 			
@@ -271,7 +276,7 @@ catch(e)
 				{
 					if(SERVICES[type] != null)
 					{
-						throw new qq.Error("Selector configuration under (id:" + id + ") is already registered.");
+						throw new qq.Error("qq.Module", "getView", "Selector configuration under (id:" + id + ") is already registered.");
 					}
 					else
 					{
@@ -280,7 +285,7 @@ catch(e)
 				}
 				else
 				{
-					throw new qq.Error("Invalid service type - (type:" + type + ").");
+					throw new qq.Error("qq.Module", "getView", "Invalid service type - (type:" + type + ").");
 				}
 			};
 			this.registerService = registerService;
@@ -319,23 +324,23 @@ catch(e)
 				{
 					if(modUID != uid)
 					{
-						throw new qq.Error("qq.Module.configure: Incorrect module uid (uid:" + uid + ") passed.");
+						throw new qq.Error("qq.Module", "configure", "Incorrect module uid (uid:" + uid + ") passed.");
 					}
 					
 					/* process all the module services */
 					processServices.call(this);
 					
-					var cfg;
+					var cfgv;
 					
 					for(var each in VIEWS)
 					{
-						cfg = VIEWS[each];
+						cfgv = VIEWS[each];
 						
-						cfg.ref.on("pre.configure");
+						cfgv.ref.on("pre.configure");
 						/* configure each module view */
-						cfg.ref.configure(cfg.uid);
+						cfgv.ref.configure(cfgv.uid);
 						
-						cfg.ref.on("post.configure");
+						cfgv.ref.on("post.configure");
 					}
 					
 					bConfigured = true;
@@ -346,6 +351,37 @@ catch(e)
 				}
 			};
 			this.configure = configure;
+
+			/**
+			* Retrieves the module state.
+			*/
+			var getState = function ()
+			{
+				var cfgv,
+					state = {views:{}},
+					atom,
+					vstate;
+				
+				for(var each in VIEWS)
+				{
+					cfgv = VIEWS[each];
+					
+					vstate = cfgv.ref.getState();
+
+					/* don't include views that haven't been initialized */
+					if(vstate != null)
+					{
+						/* set each view state */
+						//atom = {vstate: vstate};
+						atom = vstate;
+
+						state.views[each] = atom;
+					}
+				}
+
+				return state;
+			};
+			this.getState = getState;
 			
 			/**
 			* Initialize a Module.
@@ -364,6 +400,17 @@ catch(e)
 					}
 					
 					var cfgv, initHandlers;
+
+					var APPSTATE = qq.getConfig();
+
+					if(APPSTATE != null)
+					{
+						var mod = APPSTATE.mods[modUID];
+					}
+					else
+					{
+
+					}
 					
 					/* go through each of the views registered and find their view nodes in the dom */
 					for(var vuid in VIEWS)
@@ -375,9 +422,11 @@ catch(e)
 							/* set the 'dom' property in a view configuration */
 							cfgv.dom = viewWrapper.find(cfgv.qsel);
 							
+							/* hide the view right after getting its dom reference */
 							if(cfgv.dom.length > 0)
 							{
-								cfgv.dom.css("visibility", "hidden");
+								cfgv.dom.css("display", "none");
+								//cfgv.dom.css("visibility", "hidden");
 							}
 						}
 						
@@ -397,7 +446,7 @@ catch(e)
 					}
 
 					/* process init callback handlers */
-					configure = HANDLERS["init"];
+					initHandlers = HANDLERS["init"];
 
 					if(initHandlers != null && initHandlers.length > 0)
 					{
@@ -411,7 +460,7 @@ catch(e)
 							}
 							catch(e)
 							{
-								throw new qq.Error("qq.Module.init", "One of the 'init' handlers has an error.");
+								throw new qq.Error("qq.Module", "init", "One of the 'init' handlers has an error.");
 							}
 						}
 					}

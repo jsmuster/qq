@@ -1,8 +1,10 @@
 {
 	"access":{
-		"assets/css":{"subfolders": true},
-		"assets/js":{"subfolders": true},
-		"images":{"subfolders": true, "q":["*.png", "*.jpg", "*.gif", "!*.svg"]},
+		"app": {"subfolders": true},
+		"assets":{"subfolders": true},
+		"assets/js":{"linkto": "./", "q":["app.container.js", "app.js"]},
+		"assets/js/qq":{"linkto": "js/qq"},
+		"assets/img":{"subfolders": true, "q":["*.png", "*.jpg", "*.gif", "!*.svg"]},
 		"js":{"subfolders":true, "q":"*.js"},
 		".":{"q":["*.js", "*.html"]}
 	},

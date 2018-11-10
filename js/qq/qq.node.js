@@ -95,23 +95,28 @@ THE SOFTWARE.
 		/* this isn't a 'var' ie not local - otherwise causes a bug */
 		qq = require('./qq.js');
 
-		var IntUtil = require('./encryption/IntUtil.js')(qq);
-		var MD5 = require('./encryption/MD5.js')(qq);
+		require('./encryption/IntUtil.js')(qq);
+		require('./encryption/MD5.js')(qq);
 
-		var UIDGenerator = require('./qq.UIDGenerator.js')(qq);
-		var Registry = require('./qq.Registry.js')(qq);
-		var Delegate = require('./qq.Delegate.js')(qq);
-		var Router = require('./qq.Router.js')(qq);
-		var EventDispatcher = require('./qq.EventDispatcher.js')(qq);
-		var Loader = require('./qq.Loader.js')(qq);
+		require('./qq.UIDGenerator.js')(qq);
+		require('./qq.Registry.js')(qq);
+		require('./qq.Delegate.js')(qq);
+		require('./qq.Router.js')(qq);
+		require('./qq.EventDispatcher.js')(qq);
+		require('./qq.Loader.js')(qq);
 
-		var Module = require('./qq.Module.js')(qq);
+		require('./qq.Module.js')(qq);
 
-		var View = require('./qq.View.js')(qq);
+		require('./qq.View.js')(qq);
 
 		/* include widget framework */
-		var widgets = require('./qq.widgets.js')(qq);
-		var widgetList = require('./qq.widgets.list.js')(qq);
+		require('./qq.widgets.js')(qq);
+		require('./qq.widgets.list.js')(qq);
+
+		/* include minimatch for glob pattern string support */
+		require('./qq.BalancedMatch.js')(qq);
+		require('./qq.BraceExpansion.js')(qq);
+		require('./qq.Minimatch.js')(qq);
 
 		/* merge all the included concepts into one qq object */
 		// Object.assign(qq, IntUtil);
@@ -223,7 +228,7 @@ THE SOFTWARE.
 
 			if(data.app.main != null && data.app.main.length > 0)
 			{
-				var mainHTML = fs.readFileSync(data.app.main, 'utf8'); //fs.readFileSync(filePath , 'utf8');
+				var mainHTML = qq.fs.readFileSync(data.app.main, 'utf8'); //fs.readFileSync(filePath , 'utf8');
 
 				var htmlDoc = cheerio.load(mainHTML);
 				//debugger;
@@ -345,123 +350,261 @@ THE SOFTWARE.
 		qq.fs = fs;
 		qq.vm = jsVM;
 
-		/**
-		* A method which handles access rights checking, checks if the fragment represents a valid content path or query.
-		* The method stops the request or takes over handling it by returning true or false, letting the qq.Router whether to proceed or not.
-		*/
-		var handleAccessRights = function (fragment)
+
+		var isValidFileName = function (filename, query)
 		{
-			var accessCfg = qq.configure.access.get();
+			var isValid = false;
 
-			//qq.console("fragment x", fragment);
+			/* remove special characters out of the query */
+			var qName = query.replace("[^a-zA-Z0-9\\.\\-]", "");
+			
+			/* see if file name matches the query with special characters removed, this is because query can be a file name or a glob query */
+			if(filename == qName)
+			{
+				return true;
+			}
+			else
+			{
+				return qq.minimatch(filename, query);
+			}
 
-			var frags = fragment.split("\/");
+			//var validFilename = !/[^a-z0-9_.@()-]/i.test(fileName);
 
-			//debugger;
+			//var validFilename = /^[a-z0-9_.@()-]+\.[^.]+$/i.test(fileName);
+			//var validExtension = /\.txt$/i.test(fileName);
 
+			return isValid;
+		};
+
+		var validateFileName = function (filename, query)
+		{
+			var q;
+
+			/* remove all invalid characters from a file name */
+			filename = filename.replace("[^a-zA-Z0-9\\.\\-]", "");
+
+			if(filename != null && filename.length > 0)
+			{
+				if(query != null)
+				{
+					if(typeof(query) == "string")
+					{
+						if(query.length > 0)
+						{
+							return isValidFileName(filename, query);
+						}
+					}
+					/* this must be an array */
+					else if(query.length > 0)
+					{
+						var isValid = false;
+
+						for(var i = 0, l = query.length; i < l; i++)
+						{
+							q = query[i];
+							
+							if(q != null && q.length > 0 && isValidFileName(filename, q) == true)
+							{
+								isValid = true;
+							}
+						}
+
+						return isValid;
+					}
+				}
+			}
+
+			return false;
+		};
+		/**
+		* Validates a file path against access configuration
+		* returns {valid, filename, extension, dir}
+		*/
+		var validateFragment = function (fragment)
+		{
+			var delimiter = "\/",
+				accessCfg = qq.configuration.access.get();
+
+			/* split the fragment into array of fragements */
+			var frags = fragment.split(delimiter);
+
+			// TODO process just file name
+			/* if there are more than 2 fragments, directory and file name */
 			if(frags.length > 1)
 			{
-				var dirDelimiter = "/";
-				/* path without the file name */
-				var fullpath = frags.slice(0, frags.length - 1).join(dirDelimiter);
-				
-				var filename = frags[frags.length - 1],
+				/* path without the file name which will be used to retrieve the data */
+				/* fullpath can be changed later */
+				var path = frags.slice(0, frags.length - 1).join(delimiter),
+					filename = frags[frags.length - 1],
 					fileFrags = filename.split("."),
-					fileExtension = fileFrags[fileFrags.length - 1];
-					
-				var currPath = '', rights, content, mimeType, isValid = false, last = false;
+					fileExtension = fileFrags[fileFrags.length - 1],
+					fullpath = path + delimiter + filename;
 
-				/* go through every frag in the path, so for 'assets/js/qq/encryption' check 'assets then 'assets/js' then 'assets/js/qq', and check against the rules in each. */
-				/* loops through the frag trying out the entire frag from the start so we can see if there are any sub folder rules */
-				for(var i = 0, l = frags.length - 1; i < l; i++)
+				if(fileExtension.indexOf("?") != -1)
 				{
-					if(i == 0)
-					{
-						currPath = frags[0];
-					}
-					else
-					{
-						currPath += dirDelimiter + frags[i];
+					var tailFrags = fileExtension.split("?");
 
-						/* indicate its the last frag */
-						if(i == (l - 1))
+					fileExtension = tailFrags[0];
+
+					var fragsplit = fragment.split("?");
+
+					/* remove '?' and anything after */
+					fragment = fragsplit[0];
+
+					var filenamesplit = filename.split("?");
+
+					filename = filenamesplit[0];
+
+					fullpath = path + delimiter + filename;
+				}
+
+				var currDir = '', 
+					rule, 
+					content, 
+					mimeType, 
+					isValid = false, 
+					last = false;
+
+				/* go through every frag in the path (backwards), so for 'assets/js/qq/encryption' check 'assets/js/qq/encryption' then 'assets/js/qq' and so on, and check against the rules in each. */
+				/* loops through the frag trying out the entire frag from the start so we can see if there are any sub folder rules */
+				var fragsCopy = frags.slice(0, frags.length - 1),
+					fragsTail = [],
+					linkto;
+
+				/* go through a copy with a while loop */
+				while(fragsCopy.length > 0)
+				{
+					currDir = fragsCopy.join(delimiter);
+
+					/* so the current path has the rules object, lets check it */
+					if(accessCfg.static[currDir] != null)
+					{
+						rule = accessCfg.static[currDir];
+
+						/* the rules equals 'true' */
+						if(rule === true)
 						{
-							last = true;
+							return {valid: true, 
+									filename: filename, 
+									extension: fileExtension, 
+									dir: path, 
+									fullpath: fullpath};
 						}
-					}
-
-					/* so the current path has the rights object, lets check it */
-					if(accessCfg.static[currPath] != null)
-					{
-						rights = accessCfg.static[currPath];
-
-						/* the rights equals 'true' */
-						if(rights === true)
+						/* rules should be a configuration object with a set of rules */
+						else if(typeof(rule) == 'object')
 						{
-							/* if its the last frag then validate since rights are true */
-							if(last == true)
+							/* apply sub folders the same rules - a subfolders property was set to true */
+							if(rule.subfolders == true)
 							{
-								console.log("validated last frag, rights = true")
-								isValid = true;
+								return {valid: true, 
+										filename: filename, 
+										extension: fileExtension, 
+										dir: path, 
+										fullpath: fullpath};
 							}
-						}
-						/* rights should be a configuration object with a set of rules */
-						else if(typeof(rights) == 'object')
-						{
-							/* apply sub folders the same rights - a subfolders property was set to true */
-							if(rights.subfolders == true)
+							else if(rule.linkto != null && rule.linkto.length > 0)
 							{
-								console.log("validated '"+currPath+"' path, subfolders = true")
-								isValid = true;
-							}
-						}
-
-						if(isValid == true)
-						{
-							/* if full file path exists, read from it and out put into the response */
-							if(fs.existsSync(fullpath) == true)
-							{
-								content = fs.readFileSync(fragment, 'utf8');
-
-								if(content != null)
+								// TODO subdirectories need to be specified as well "assets/js/qq":{"linkto": "js/qq", "subdirectories": true},
+								// need to figure out whether the fragsTail is not empty
+								if(rule.q != null)
 								{
-									/* figure out the mime type for the file if we did mention it */
-									mimeType = mimeTypes["." + fileExtension];
-
-									if(mimeType != null)
+									isValid = validateFileName(filename, rule.q);
+								}
+								else
+								{
+									isValid = true;
+								}
+								//debugger;
+								
+								/* if the file name falls into file name query then replace the fullpath with newly linkto path */
+								/* this needs to happen since we are re-linking the path */
+								if(isValid)
+								{
+									if(fragsTail.length > 0)
 									{
-										qq.res.writeHead(200, {'Content-Type': mimeType});
+										fullpath = clearSlashes(rule.linkto) + delimiter + fragsTail.join(delimiter) + delimiter + filename;
 									}
 									else
 									{
-										// no mime type found - write a default mime type?
+										fullpath = clearSlashes(rule.linkto) + delimiter + filename;
 									}
 
-									qq.res.write(content);
+									return {valid: true, 
+										filename: filename, 
+										extension: fileExtension, 
+										dir: rule.linkto, 
+										fullpath: fullpath};
+								}
+								else
+								{
+									return {valid: true, 
+										filename: filename, 
+										extension: fileExtension, 
+										dir: path, 
+										fullpath: fullpath};
 								}
 							}
-
-
-							return false;
 						}
 					}
-				}
 
-				//qq.console("path x", qq.dump(accessCfg));
+					fragsTail.unshift(fragsCopy.pop());
 
-				// path
-				// "assets/js/qq/encryption"
+				} /* end while loop */
 
-				// assets/js/qq: {subfolders: true}
-
-
-				// else
-				// {
-				// 	return true;
-				// }
+				return {valid: false};
 			}
 
-			return true;
+			return {valid: false};
+		};
+
+		var clearSlashes = function(path)
+        {
+            return path.toString().replace(/\/$/, '').replace(/^\//, '');
+        };
+
+		/**
+		* A method which handles access rights checking, checks if the fragment represents a valid content path or query.
+		* The method stops the request or takes over handling it by returning true or false, letting the qq.Router whether to proceed or not.
+		* @fragment content path
+		*/
+		var handleAccessRights = function (fragment)
+		{
+			/* result of the validating a fragment */
+			var vres = validateFragment(fragment);
+
+			if(vres != null && vres.valid === true)
+			{
+				/* if full file path exists, read from it and out put into the response */
+				if(qq.fs.existsSync(vres.fullpath) == true)
+				{
+					content = qq.fs.readFileSync(vres.fullpath, 'utf8');
+
+					if(content != null)
+					{
+						/* figure out the mime type for the file if we did mention it */
+						mimeType = mimeTypes["." + vres.extension];
+
+						if(mimeType != null)
+						{
+							qq.res.writeHead(200, {'Content-Type': mimeType});
+						}
+						else
+						{
+							// no mime type found - write a default mime type?
+						}
+
+						qq.res.write(content);
+					}
+				}
+				else
+				{
+					qq.res.writeHead(404, {"Content-Type": "text/plain"});
+					qq.res.write("404 Not Found\n");
+					qq.res.end();
+				}
+
+				return false;
+			}
 
 			//qq.console("accessCfg", qq.dump(accessCfg));
 		};
@@ -472,23 +615,48 @@ THE SOFTWARE.
 		//var extname = String(path.extname(filePath)).toLowerCase();
 		//var contentType = mimeTypes[extname] || 'application/octet-stream';
 
+		function injectQQState()
+		{
+
+		};
+
 		/* on server request event - logical entrance point for the server */
 		function handleServerRequestEvent(req, res)
 		{
-			res.writeHead(200, {'Content-Type': 'text/html'}); // http header
-			
 			var url = req.url;
 			
 			qq.res = res;
 
+			/* checks the qq router if request was processed */
 			if(qq.rr.init(req.url))
 			{
 				/* manually flush the console */
 				qq.console.flush();
 
-				debugger;
+				res.writeHead(200, {'Content-Type': 'text/html'}); // http header
+
+				/* clone the document & inject javascript into it */
+				var doc = qq.document.clone();
+				var head = doc.find('head');
+				
+				var qqstate = {x:100};
+				var qqstateRet = qq.getState();
+				
+				head.append(qq.$(`
+					<script type="text/javascript">
+						var __qqstate = `+JSON.stringify(qqstateRet)+`;
+					</script>`));
+
+				// head.append(qq.$(`
+				// 	<script type="text/javascript">
+				// 		var _qqstate = "`+(function ()
+				// 			{
+
+				// 			}).toString().match(/function[^{]+\{([\s\S]*)\}$/)[1]+`"
+				// 	</script>`));
+
 				/* output the html into the browser */
-				res.write(qq.document.html());
+				res.write(doc.toString());
 				
 				/* remove the response object reference from qq */
 				res.end();
@@ -507,7 +675,7 @@ THE SOFTWARE.
 		};
 
 		/* CONFIGURE QQ */
-		var content = fs.readFileSync("./config.json");
+		var content = qq.fs.readFileSync("./config.json");
 
 		processConfigJSON(JSON.parse(content))
 

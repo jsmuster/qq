@@ -1,6 +1,7 @@
 (function(qq)
 {
 	//debugger;
+
 	console.log("%c module.mmOrders", "color: white; background: red; padding: 2px; font-size: 13px;");
 	/* mapToName: if true - maps view names to services */
 	var module = qq.registerModule("mmOrders", {mapToName:true, mainView:"main"}),

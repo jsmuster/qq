@@ -1,6 +1,7 @@
 (function(qq)
 {
 	//debugger;
+
 	console.log("%c module.Cart", "color: white; background: red; padding: 2px; font-size: 13px;");
 	/* mapToName: if true - maps view names to services */
 	var module = qq.registerModule("mmCart", {mapToName:true, mainView:"main"}),
@@ -129,12 +130,21 @@
 			return {init: function(ref, cfg, GROUPS)
 				{
 					console.log("mm.cartItem (*) init", ref, cfg, GROUPS);
+					debugger;
 				},
 				set: function (ref, data, cfg)
 				{
-					console.log("mm.cartItem SET ", ref, "\ndata", data, "\ncfg", cfg)
+					var action = ref.find(".mmCartItemAction"),
+						value = ref.find(".mmCartItemValue");
+
+					action.html(data.price);
+					value.html(data.shares);
+
+					console.log("mm.cartItem SET ", ref, "\ndata", data, "\ncfg", cfg);
+
+					debugger;
 				}};
-		})
+		})()
 	};
 
 	main.on("reset", function ()
@@ -170,7 +180,7 @@
 
 	module.on("init", function ()
 	{
-		debugger;
+		//debugger;
 		var _isNode = qq.isNode();
 
 		if(_isNode)

@@ -22,7 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-'use strict';
+//'use strict';
 
 /* this check and creation of the 'qq' object */
 try
@@ -129,8 +129,7 @@ catch(e)
 								
 		            if(mode === 'history')
 		            {
-		            	console.log("@ fragment [" + url + "]");
-		            	//console.log("@ isNode " + _isNode);
+		            	if(_isNode) console.log("@ fragment [" + url + "]");
 		            	
 		            	if(_isNode)
 		            	{
@@ -147,14 +146,14 @@ catch(e)
 	            			url = location.pathname + location.search;
 	            		}
 	            		
-	                fragment = clearSlashes(decodeURI(url));
-	                
-	                fragment = fragment.replace(/\?(.*)$/, '');
-	                
-	                console.log("@ fragment [" + fragment);
+		                fragment = clearSlashes(decodeURI(url));
+		                
+		                fragment = fragment.replace(/\?(.*)$/, '');
+		                
+		                if(_isNode) console.log("@ fragment [" + fragment);
 									
-									/* so if the root isn't '/' then remove it */
-	                fragment = rroot != '/' ? fragment.replace(rroot, '') : fragment;
+						/* so if the root isn't '/' then remove it */
+	                	fragment = rroot != '/' ? fragment.replace(rroot, '') : fragment;
 		            }
 		            else
 		            {
@@ -280,19 +279,24 @@ catch(e)
 		
 		            return false;
 		        },
+		        /**
+		        * Initializes the router.
+		        * client - starts the router interval and keeps processing the window.url or custom services that retrieves the route path.
+		        * 
+		        */
 		        init = function()
 		        {
 		        	var current, 
-		        			url = null, 
-		        			/* service function retrieves a fragment */
-		        			getFragService = null;
+	        			url = null, 
+	        			/* service function retrieves a fragment */
+	        			getFragService = null;
 		        	
 		        	if(_isNode == false)
 		        	{
 			        	/* create a new delegate here so we can assign values to it later */
-			        	var del = function()
+			        	var delRouteProcessor = function()
 			            {
-			            	/* retrieve assigned getFragService */
+			            	/* retrieve assigned getFragService, which is a custom handler that retrieves the path fragment string */
 			            	var getFragService = arguments.callee.getFragService,
 			            		frag;
 			            	
@@ -318,7 +322,7 @@ catch(e)
 								current = frag;
 								validate(frag);
 							}
-			            }; /* end del delegate */
+			            }; /* end delRouteProcessor delegate */
 		        	}
 		        	
 		        	/* figure out what the arguments were passed into this function and configure local variables */
@@ -329,7 +333,7 @@ catch(e)
 		        		getFragService = arguments[1];
 		        		
 		        		/* assign the frag service into the delegate as we discover it */
-		        		if(_isNode == false) del.getFragService = getFragService;
+		        		if(_isNode == false) delRouteProcessor.getFragService = getFragService;
 		        	}
 		        	else if(arguments.length == 1)
 		        	{
@@ -338,7 +342,7 @@ catch(e)
 		        			getFragService = arguments[0];
 		        			
 		        			/* assign the frag service into the delegate as we discover it */
-		        			if(_isNode == false) del.getFragService = getFragService;
+		        			if(_isNode == false) delRouteProcessor.getFragService = getFragService;
 		        		}
 		        		else
 	        			{
@@ -384,7 +388,7 @@ catch(e)
 	            	{
 	            		/* start the router interval for dynamic environments */
 		           		clearInterval(interval);
-		            	interval = setInterval(del, 50);
+		            	interval = setInterval(delRouteProcessor, 50);
 	            	}
 
 	            	return isValid;

@@ -22,6 +22,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
+console.log("- injected qq.widgets.list.js");
+
 try
 {
 	if(qq == null)
@@ -345,161 +347,168 @@ catch(e)
 			* @cfg - configuration
 			* @pcfg - parent configuration
 			*/
-			var registerSubSelector = function (uid, cfg, pcfg)
-			{
-				if(uid != null && uid.length > 0)
-				{
-					if(SUBSELECTORS[uid] != null)
-					{
-						throw new qq.Error("qq.widgets.list", "registerSubSelector", "Selector configuration under (uid:" + uid + ") is already registered.");
-					}
-					else
-					{
-						/* sub selector path is made out of parent path */
-						//var path = pcfg.path + "." + id;
+			// var registerSubSelector = function (uid, cfg, pcfg)
+			// {
+			// 	if(uid != null && uid.length > 0)
+			// 	{
+			// 		if(SUBSELECTORS[uid] != null)
+			// 		{
+			// 			throw new qq.Error("qq.widgets.list", "registerSubSelector", "Selector configuration under (uid:" + uid + ") is already registered.");
+			// 		}
+			// 		else
+			// 		{
+			// 			/* sub selector path is made out of parent path */
+			// 			//var path = pcfg.path + "." + id;
 
-						/* widget uid */
-						//var uid = qq.GetHashCode(cfg, path);
+			// 			/* widget uid */
+			// 			//var uid = qq.GetHashCode(cfg, path);
 
-						var isGroup = false;
+			// 			var isGroup = false;
 						
-						if(cfg.type != null)
-						{
-							if(typeof(cfg.type) == "object")
-							{
-								isGroup = true;
-							}
-							else
-							{
-								if(WIDGETS[cfg.type] == null)
-								{
-									throw new qq.Error("qq.widgets.list", "registerSubSelector", "Invalid type (type:" + cfg.type + ") under selector configuration (uid:" + uid + ")");
-								}
-							}
-						}
-						else
-						{
-							isGroup = true;
-						}
+			// 			if(cfg.type != null)
+			// 			{
+			// 				if(typeof(cfg.type) == "object")
+			// 				{
+			// 					isGroup = true;
+			// 				}
+			// 				else
+			// 				{
+			// 					if(WIDGETS[cfg.type] == null)
+			// 					{
+			// 						throw new qq.Error("qq.widgets.list", "registerSubSelector", "Invalid type (type:" + cfg.type + ") under selector configuration (uid:" + uid + ")");
+			// 					}
+			// 				}
+			// 			}
+			// 			else
+			// 			{
+			// 				isGroup = true;
+			// 			}
 						
-						if(cfg.q != null)
-						{
-							if(typeof(cfg.q) == "object")
-							{
-								isGroup = true;
-							}
-							else
-							{
-								isGroup = false;
-							}
-						}
-						else if(!isGroup)
-						{
-							throw new qq.Error("qq.widgets.list", "registerSubSelector", "Selector configuration under (uid:" + uid + ") is missing a query (q:" + cfg.q + ").");
-						}
+			// 			if(cfg.q != null)
+			// 			{
+			// 				if(typeof(cfg.q) == "object")
+			// 				{
+			// 					isGroup = true;
+			// 				}
+			// 				else
+			// 				{
+			// 					isGroup = false;
+			// 				}
+			// 			}
+			// 			else if(!isGroup)
+			// 			{
+			// 				throw new qq.Error("qq.widgets.list", "registerSubSelector", "Selector configuration under (uid:" + uid + ") is missing a query (q:" + cfg.q + ").");
+			// 			}
 
-						/* make a copy of the widget configuration and store it in sub selectors */
-						// var ncfg = jQuery.extend(true, {}, cfg);
-						// 	ncfg.uid = uid;
-						// 	ncfg.path = path;
-							//ncfg.id = id;
+			// 			/* make a copy of the widget configuration and store it in sub selectors */
+			// 			// var ncfg = jQuery.extend(true, {}, cfg);
+			// 			// 	ncfg.uid = uid;
+			// 			// 	ncfg.path = path;
+			// 				//ncfg.id = id;
 						
-						//debugger;
-						if(isGroup == true)
-						{
-							/* items - selector references, irefs - dom item references */
-							SUBSELECTORS[uid] = {items:cfg, group:true, irefs:{}};
-						}
-						else
-						{
-							SUBSELECTORS[uid] = {cfg:cfg, group:false};
-						}
-					}
-				}
-				else
-				{
-					throw new qq.Error("qq.widgets.list", "registerSubSelector", "Invalid selector id - (id:" + id + ").");
-				}
-			};
+			// 			//debugger;
+			// 			if(isGroup == true)
+			// 			{
+			// 				/* items - selector references, irefs - dom item references */
+			// 				SUBSELECTORS[uid] = {items:cfg, group:true, irefs:{}};
+			// 			}
+			// 			else
+			// 			{
+			// 				SUBSELECTORS[uid] = {cfg:cfg, group:false};
+			// 			}
+			// 		}
+			// 	}
+			// 	else
+			// 	{
+			// 		throw new qq.Error("qq.widgets.list", "registerSubSelector", "Invalid selector id - (id:" + id + ").");
+			// 	}
+			// };
 
 			/**
 			* Registers selectors for a list item during initialization of the qq.View.
 			* This procedure registers the selectors with the global list concept.
 			*/
-			var registerSubSelectors = function (cfg)
-			{
-				//debugger;
+			// var registerSubSelectors = function (cfg)
+			// {
+			// 	//debugger;
 
-				if(cfg.li != null)
-				{
-					var path;
-					var uid;
+			// 	if(cfg.li != null)
+			// 	{
+			// 		var path;
+			// 		var uid;
 
-					if(cfg.li.selectors != null)
-					{
-						var ncfg;
+			// 		if(cfg.li.selectors != null)
+			// 		{
+			// 			var ncfg;
 
-						for(var id in cfg.li.selectors)
-						{
-							path = cfg.path + "." + id;
+			// 			for(var id in cfg.li.selectors)
+			// 			{
+			// 				path = cfg.path + "." + id;
 
-							uid = qq.GetHashCode(cfg.li.selectors[id], path);
+			// 				uid = qq.GetHashCode(cfg.li.selectors[id], path);
 
-							ncfg = qq.$.extend(true, {}, cfg.li.selectors[id]);
+			// 				ncfg = qq.$.extend(true, {}, cfg.li.selectors[id]);
 
-							ncfg.uid = uid;
-							ncfg.path = path;
-							ncfg.id = id;
+			// 				ncfg.uid = uid;
+			// 				ncfg.path = path;
+			// 				ncfg.id = id;
 
-							registerSubSelector(uid, ncfg, cfg);
-						}
-					}
-					else if(cfg.li.type != null)
-					{
-						//debugger;
-						var id = "{[ref]}";
+			// 				registerSubSelector(uid, ncfg, cfg);
+			// 			}
+			// 		}
+			// 		else if(cfg.li.type != null)
+			// 		{
+			// 			var id = "{[*]}";
 
-						path = cfg.path + "." + id;
+			// 			path = cfg.path + "." + id;
 
-						uid = qq.GetHashCode(cfg.li, path);
+			// 			uid = qq.GetHashCode(cfg.li, path);
 
-						ncfg = qq.$.extend(true, {id:id, path:path, uid:uid}, cfg.li);
+			// 			ncfg = qq.$.extend(true, {id:id, path:path, uid:uid}, cfg.li);
 
-						//ncfg.uid = uid;
-						//ncfg.path = path;
-						//ncfg.id = id;
-
-						/* registers a selector without an id */
-						registerSubSelector(uid, ncfg, cfg);
-					}
-				}
-			};
+			// 			/* registers a selector without an id */
+			// 			registerSubSelector(uid, ncfg, cfg);
+			// 		}
+			// 	}
+			// };
 
 			/**
 			* Used to initialize a widget
 			*/
-			var processWidget_init_handler = function (index, container, cfg)
+			var processWidget_init_handler = function (container, cfg)
 			{
 				var wdgt = WIDGETS[cfg.type];
 
 				if(wdgt != null && wdgt.cfg != null)
 				{
-					wdgt = wdgt.cfg;
-					
-					if(wdgt.init != null)
+					if(wdgt.cfg.init != null)
 					{
 						/* this is where we set service data to a widget */
-						wdgt.init(container, cfg);
+						wdgt.cfg.init(container, cfg);
 					}
 				}
 			};
 
-			/* performs query selection and establishes the dom & domqq references within the view */
-			var initChild = function (index, viewDOM, id, cfgchild)
+			/**
+			* Performs query selection and establishes the dom & domqq references within the view
+			*/
+			var initChild = function (viewDOM, cfgchild, bIs)
 			{
+				//debugger;
 				var ref, refqq;
+
+				if(bIs == true)
+				{
+					if(viewDOM.is(cfgchild.q))
+					{
+						ref = viewDOM;
+					}
+				}
+				else
+				{
+					ref = viewDOM.find(cfgchild.q);
+				}
 				
-				ref = viewDOM.find(cfgchild.q);
 				refqq = null;
 				
 				if(cfgchild.qq != null && cfgchild.qq.length > 0)
@@ -511,13 +520,13 @@ catch(e)
 						cfgchild.dom = ref;
 						cfgchild.domqq = refqq;
 						
-						processWidget_init_handler(index, refqq, cfgchild);
+						processWidget_init_handler(refqq, cfgchild);
 
 						return refqq;
 					}
 					else
 					{
-						throw new qq.Error("qq.View", "initChild", "Couldn't find sub selector (qq:" + cfgchild.qq + ").");
+						throw new qq.Error("qq.widgets.list", "initChild", "Couldn't find sub selector (qq:" + cfgchild.qq + ").");
 					}
 				}
 				else
@@ -527,13 +536,13 @@ catch(e)
 						cfgchild.dom = ref;
 						cfgchild.domqq = null;
 						
-						processWidget_init_handler(index, ref, cfgchild);
+						processWidget_init_handler(ref, cfgchild);
 
 						return ref;
 					}
 					else
 					{
-						throw new qq.Error("qq.View", "initChild", "Couldn't find a selector (q:" + cfgchild.q + ") for (selector:" + id + ").");
+						throw new qq.Error("qq.widgets.list", "initChild", "Couldn't find a selector (q:" + cfgchild.q + ").");
 					}
 				}
 			};
@@ -546,16 +555,17 @@ catch(e)
 			* val - item data value
 			* TRANSFORMERS - transformers for each selector within this hierarchy
 			*/
-			var initChildSelectors = function (index, cfg, itemCfg, val, TRANSFORMERS)
+			var initChildSelectors = function (index, cfg, itemCfg)
 			{
 				/* itemCfg.ref - reference to the item's dom element
 				 * itemCfg.children - reference to item's child selectors (children)
+				 * itemCfg.path
 				 */
 				/* so - selector object for each of the sub selectors in item */
 				/* sicfg - item's child configuration - stores selector references & configuration for each item */
 				var so,
 					childCfg,
-					cfg,
+					icfg,
 					grp,
 					ref,
 					refqq,
@@ -567,18 +577,10 @@ catch(e)
 					path,
 					uid;
 
-				var ncfg;
-
-				// var ncfg = jQuery.extend(true, {}, cfg);
-				// 		ncfg.uid = uid;
-				// 		ncfg.path = path;
-				
-				//debugger;
-
 				for(eachA in cfg.li.selectors)
 				{
 					so = cfg.li.selectors[eachA];
-
+					//debugger;
 					path = cfg.path + "[" + index + "]." + eachA;
 
 					/* uid built from a path */
@@ -589,25 +591,26 @@ catch(e)
 						if(so.group == true)
 						{
 							/* items - selector references, irefs - dom item references */
-							//cfg:so, 
-							//ncfg = {path:path, uid:uid, items:{}, group:true, irefs:{}};
+							childCfg = qq.$.extend(true, {id:eachA, path:path, uid:uid, items:{}, group:true, irefs:{}}, so);
 
-							ncfg = qq.$.extend(true, {id:eachA, path:path, uid:uid, items:{}, group:true, irefs:{}}, so);
-
-							itemCfg.children[eachA] = ncfg;
+							itemCfg.children[eachA] = childCfg;
 						}
 						else
 						{
-							//cfg:so, 
-							//itemCfg.children[eachA] = {path:path, uid:uid, group:false};
+							childCfg = qq.$.extend(true, {id:eachA, path:path, uid:uid, group:false}, so);
 
-							ncfg = qq.$.extend(true, {id:eachA, path:path, uid:uid, group:false}, so);
-
-							itemCfg.children[eachA] = ncfg;
+							itemCfg.children[eachA] = childCfg;
 						}
 					}
 
 					childCfg = itemCfg.children[eachA];
+					// id
+					// path
+					// uid
+					// group
+
+					// childCfg.dom
+					// childCfg.domqq
 					
 					if(so.group == true)
 					{
@@ -618,23 +621,24 @@ catch(e)
 						/* initialize group's selectors. A group is essentially a collection of selectors */
 						for(eachB in so.items)
 						{
-							cfg = so.items[eachB];
+							icfg = so.items[eachB];
 							
 							sttotal++;
 							/* see if all the types within the group are the same as the first */
 							if(stype == null)
 							{
-								stype = cfg.type;
+								stype = icfg.type;
 								stcount++;
 							}
-							else if(stype == cfg.type)
+							else if(stype == icfg.type)
 							{
 								stcount++;
 							}
 							//debugger;
-							console.log("*-- cfg", cfg);
+							console.log("*-- icfg", icfg);
 
-							sicfg.irefs[eachB] = initChild(index, itemCfg.ref, eachB, cfg);
+							/* adds dom & domqq to icfg */
+							sicfg.irefs[eachB] = initChild(itemCfg.ref, icfg);
 						}
 						
 						/* all the types in the group are the same, therefor set the group type */
@@ -646,6 +650,8 @@ catch(e)
 						{
 							so.gtype = null;
 						}
+
+						// TODO handle configuration errors when item aren't of the same type in a group
 						
 						grp = GROUPS[so.gtype];
 						
@@ -663,9 +669,7 @@ catch(e)
 					}
 					else
 					{
-						//console.log("*-- childCfg", childCfg);
-						
-						initChild(index, itemCfg.ref, eachA, childCfg);
+						initChild(itemCfg.ref, childCfg);
 					}
 				}
 			};
@@ -683,70 +687,141 @@ catch(e)
 			};
 
 
+			/**
+			* Applies data to child selectors of list item.
+			* @cfg list configuration token
+			* @itemCfg item configuration for each list item
+			* @val value of the list item
+			* @TRANSFORMERS 
+			*/
 			var applyDataToChildSelectors = function (cfg, itemCfg, val, TRANSFORMERS)
 			{
-				var so, each, fn, transformer;
+				var so, each, fn, transformer, wdgt;
 
 				for(each in cfg.li.selectors)
 				{
 					so = cfg.li.selectors[each];
 
-					/* apply transformer to data */
-					if(TRANSFORMERS[each] != null)
+					/* find a child in item's configuration of same name as selector */
+					childCfg = itemCfg.children[each];
+
+					// itemCfg.ref
+					// itemCfg.children
+
+					// childCfg.id
+					// childCfg.path
+					// childCfg.uid
+					// childCfg.group
+					// childCfg.dom
+					// childCfg.domqq
+
+					// childCfg.type
+					// childCfg.li
+					// childCfg.li.type
+
+					if(childCfg != null)
 					{
-						transformer = TRANSFORMERS[each];
-
-						if(transformer.__ != null && typeof(transformer.__) == "function")
+						if(TRANSFORMERS != null && TRANSFORMERS[each] != null)
 						{
-							tranfn = transformer.__;
+							val = qq.transformer(TRANSFORMERS, each, val);
+						}
 
-							try
+						wdgt = WIDGETS[so.type];
+
+						if(wdgt.cfg.set != null)
+						{
+							// TODO check if this is correct way of setting the data into sub widget
+							if(childCfg.domqq != null)
 							{
-								val = tranfn(val);
+								if(typeof(TRANSFORMERS[each]) == "object")
+								{
+									wdgt.cfg.set(childCfg.domqq, val, childCfg, TRANSFORMERS[each]);
+								}
+								else
+								{
+									wdgt.cfg.set(childCfg.domqq, val, childCfg);
+								}
 							}
-							catch(e)
+							else
 							{
-								throw new qq.Error("qq.view.applyData","Error executing transformer (id:" + each + ").\n" + e);
+								if(typeof(TRANSFORMERS[each]) == "object")
+								{
+									wdgt.cfg.set(childCfg.dom, val, childCfg, TRANSFORMERS[each]);
+								}
+								else
+								{
+									wdgt.cfg.set(childCfg.dom, val, childCfg);
+								}
+								
 							}
 						}
-					}
-
-					if(TRANSFORMERS[each] != null)
-					{
-						fn = TRANSFORMERS[each];
-
-						try
+						else
 						{
-							fn(val);
+							// TODO
 						}
-						catch(e)
-						{
 
-						}
+						childCfg.data = qq.clone(val);
 					}
 				}
+			};
 
+			var applyDataToChild = function (cfg, itemCfg, val, TRANSFORMERS)
+			{
+				var wdgt;
 
+				//cfg.li.type
 
-				if(itemCfg.children[eachA] == null)
+				//itemCfg
+				// itemCfg.ref
+				// itemCfg.children
+
+				if(itemCfg != null)
 				{
+					wdgt = WIDGETS[cfg.li.type];
+					
+					debugger;
 
+					/* transform value by transformer function  */
+					if(TRANSFORMERS != null)
+					{
+						val = qq.transformer(TRANSFORMERS, val);
+					}
+
+					if(wdgt != null && wdgt.cfg != null && wdgt.cfg.set != null)
+					{
+						// TODO check if this is correct way of setting the data into sub widget
+						wdgt.cfg.set(itemCfg.ref, val, cfg.li);
+					}
+					else
+					{
+						itemCfg.data = qq.clone(val);
+					}
 				}
 			};
 
 			/**
 			* Initializes each item within the list in this method.
 			* Here we set the value into each list item.
+			* @index - item's index in widget's list of items
+			* @length - total length of the items
+			* @clone - clone of the template used for the item, its main element
+			* @iref - this could be the clone or sub dom element within the dom element tree
+			* @cfg - widget configuration
+			* @val - item value
+			* TRANSFORMERS - data transformers
 			*/
-			var applyDataToItem = function (index, length, itemBody, iref, cfg, val, TRANSFORMERS)
+			var applyDataToItem = function (index, length, clone, iref, cfg, data, TRANSFORMERS)
 			{
-				console.log("*** applyDataToItem", index, iref, cfg, val);
+				console.log("*** applyDataToItem", index, iref, cfg, data);
+
+				var itemCfg, path, li;
 				
 				//debugger;
 
 				/* each item is a complicated */
 				if(cfg.li != null)
 				{
+					/* each list item is a collection of widgets */
 					if(cfg.li.selectors != null)
 					{
 						if(cfg.items == null)
@@ -754,43 +829,109 @@ catch(e)
 							cfg.items = [];
 						}
 
-						var itemCfg = {ref:itemBody, children:{}};
+						itemCfg = {ref:clone, children:{}};
+
+						if(cfg.path != null)
+						{
+							itemCfg.path = cfg.path + "[" + index + "]";
+						}
+						else
+						{
+							itemCfg.path = "[" + index + "]";
+						}
+
+						li = {q:cfg.li.q};
+
+						if(cfg.li.type != null)
+						{
+							li.type = cfg.li.type;
+						}
+
+						if(cfg.li.selectors != null)
+						{
+							li.selectors = cfg.li.selectors;
+						}
+
+						if(cfg.li.qq != null)
+						{
+							li.qq = cfg.li.qq;
+						}
+
+						itemCfg.uid = qq.GetHashCode(li, itemCfg.path);
 						
 						cfg.items.push(itemCfg);
 
-						initChildSelectors(index, cfg, itemCfg, val, TRANSFORMERS);
+						initChildSelectors(index, cfg, itemCfg);
+						// , data, TRANSFORMERS
 
-						//applyDataToChildSelectors(cfg, itemCfg, val, TRANSFORMERS);
+						applyDataToChildSelectors(cfg, itemCfg, data, TRANSFORMERS);
 					}
+					/* each list item is a widget */
 					else if(cfg.li.type != null)
 					{
-						debugger;
-						console.log("W LIST TYPE")
-						if(cfg.item == null)
+						if(cfg.items == null)
 						{
-							cfg.item = {ref:itemBody};
+							cfg.items = [];
 						}
 
-						/* initialize the widget of type cfg.li.type */
-						processWidget_init_handler(index, itemBody, cfg);
-					}
+						itemCfg = {ref:clone};
 
-					//SUBSELECTORS
-					//processSelectors(listItem, cfg.li.selectors);
-					// for(var each in cfg.li.selectors)
-					// {
-					// 	listItem.SELECTOR[id] = {cfg:cfg.li.selectors[each], group:false};
-					// }
+						//debugger;
+
+						if(cfg.path != null)
+						{
+							itemCfg.path = cfg.path + "[" + index + "]";
+						}
+						else
+						{
+							itemCfg.path = "[" + index + "]";
+						}
+
+						li = {q:cfg.li.q};
+
+						if(cfg.li.qq != null)
+						{
+							li.qq = cfg.li.qq;
+						}
+
+						if(cfg.li.type != null)
+						{
+							li.type = cfg.li.type;
+						}
+
+						if(cfg.li.selectors != null)
+						{
+							li.selectors = cfg.li.selectors;
+						}
+
+						itemCfg.uid = qq.GetHashCode(li, itemCfg.path);
+						
+						//itemCfg.data = qq.clone(data);
+
+						cfg.items.push(itemCfg);
+
+						/* initialize the widget of type cfg.li.type */
+
+						/* adds dom & domqq to itemCfg */
+						initChild(clone, cfg.li, true);
+						
+						applyDataToChild(cfg, itemCfg, data, TRANSFORMERS);
+					}
+					else
+					{
+						// TODO what to do here?
+					}
 				}
 				/* the item is just an html element with values inside of it, very basic */
 				else
 				{
+					// TODO test this, can list work without 'li' configuration?
 					/* sets lists item's value */
 					setListItemValue(index, iref, cfg, val);
 					
 					if(cfg.on != null)
 					{
-						processOnHandlers(index, l, itemBody, iref, val, cfg);
+						processOnHandlers(index, l, clone, iref, val, cfg);
 					}
 				}
 			};
@@ -936,7 +1077,7 @@ catch(e)
 					
 					/* after setting up the template for the list */
 					/* assign the jquery configuration */
-					ecfg = {items:[], type:0};
+					ecfg = {templates:[], type:0, children: {}};
 					
 					cfg.domJQConfig[index] = ecfg;
 					
@@ -960,7 +1101,7 @@ catch(e)
 							}
 							
 							/* for some reason temp has empty qq property */
-							ecfg.items[0] = temp;
+							ecfg.templates[0] = temp;
 						}
 						else
 						{
@@ -975,7 +1116,7 @@ catch(e)
 							}
 							
 							
-							ecfg.items[0] = temp;
+							ecfg.templates[0] = temp;
 						}
 					}
 					else if(templates.length >= 2)
@@ -996,7 +1137,7 @@ catch(e)
 								temp.ref = qq.$(temp.ref).detach();
 							}
 							
-							ecfg.items[0] = temp;
+							ecfg.templates[0] = temp;
 						}
 						else
 						{
@@ -1010,7 +1151,7 @@ catch(e)
 								temp.ref = qq.$(temp.ref).detach();
 							}
 							
-							ecfg.items[0] = temp;
+							ecfg.templates[0] = temp;
 						}
 						
 						temp = templates[1];
@@ -1027,7 +1168,7 @@ catch(e)
 								temp.ref = qq.$(temp.ref).detach();
 							}
 							
-							ecfg.items[1] = temp;
+							ecfg.templates[1] = temp;
 						}
 						else
 						{
@@ -1041,7 +1182,7 @@ catch(e)
 								temp.ref = qq.$(temp.ref).detach();
 							}
 							
-							ecfg.items[1] = temp;
+							ecfg.templates[1] = temp;
 						}
 						
 						/* TODO process the two and figure the difference between them ? */
@@ -1088,7 +1229,7 @@ catch(e)
 				/* remove all children of the list item */
 				curef.empty();
 				
-				itemA = ecfg.items[0];
+				itemA = ecfg.templates[0];
 				
 				if(cfg.on != null)
 				{
@@ -1137,7 +1278,7 @@ catch(e)
 							if(itemA.qqref == null)
 							{
 								iref = clone.find(itemA.qq);
-								itemA.qqref = iref;
+								//itemA.qqref = iref;
 							}
 							else
 							{
@@ -1155,6 +1296,9 @@ catch(e)
 							val = cfg.on.value.call(null, i, l, val, cfg);
 						}
 
+						/**
+						* make cfg.items & add each item in there
+						*/
 						applyDataToItem(i, l, clone, iref, cfg, val, TRANSFORMERS);
 
 						/* appends a new html item */
@@ -1165,7 +1309,7 @@ catch(e)
 				two templates are present within the template collection */
 				else if(ecfg.type == "double")
 				{
-					itemB = ecfg.items[1];
+					itemB = ecfg.templates[1];
 					
 					for(; i < l; i++)
 					{
@@ -1255,14 +1399,16 @@ catch(e)
 							console.log("ref", ref);
 							console.log("cfg", cfg);
 							
+							/* retrieve a reference to global widgets object */
 							if(WIDGETS == null)
 								WIDGETS = qq.getWidgets();
 							
+							/* retrieve a reference to global groups object */
 							if(GROUPS == null)
 								GROUPS = qq.getGroups();
 							
 							/* goes over the sub selectors and processes the configuration for later use when building the list */
-							registerSubSelectors(cfg);
+							//registerSubSelectors(cfg);
 
 							/* process on config for the list widget */
 							/* on configuration makes it easy */
@@ -1303,7 +1449,10 @@ catch(e)
 							console.log("cfg", cfg);
 							
 							//window.cfg = cfg;
-							debugger;
+							//debugger;
+
+							// already set by the view 
+							// cfg.data
 
 							if((data instanceof Array) && data.length > 0)
 							{
@@ -1342,6 +1491,258 @@ catch(e)
 							}
 
 							console.groupEnd();
+						},
+						get: function (container, cfg)
+						{
+							if(cfg.items != null)
+							{
+								if(cfg.items.length > 0)
+								{
+									var item, data = [];
+
+									for(var i = 0, l = cfg.items.length; i < l; i++)
+									{
+										item = cfg.items[i];
+
+										data[i] = qq.clone(item.data, {});
+									}
+
+									return data;
+								}
+								else
+								{
+									return [];
+								}
+								//cfg.items
+							}
+							else
+							{
+								null;
+							}
+
+							//debugger;
+
+							//cfgo.dom
+
+							// dom: module.exports [Node, options: {…}, prevObject: module.exports(1)]
+							// domJQ: [module.exports(1)]
+							// domJQConfig: [{…}]
+							// domJQTag: ["table"]
+							// domqq: null
+							// items: (2) [{…}, {…}]
+							// li: {q: "#mmCItem", selectors: {…}}
+							// on: {value: ƒ, render: ƒ}
+							// onCfg: {n: {…}, nint: {…}}
+							// path: "mmCart.main.cartList"
+							// q: "#mmCartList"
+							// type: "list"
+							// uid: "5188a283eede1d366b7847f30dcf9467"
+
+							//return {list_data:true};
+						},
+						getstate: function (container, cfg)
+						{
+							var state = {};
+							
+							if(cfg.domJQ)
+							{
+
+							}
+
+							debugger;
+
+							/* based on configuration figure out the type of list that was built */
+							if(cfg.li != null)
+							{
+								var item, // item configuration object
+									istate, // item state
+									witems = [], // widgets items
+									so, // list item selector object
+									child, // child item
+									cstate; // child state
+
+								var wdgt;
+
+								if(cfg.li.selectors != null)
+								{
+									/* go through each item in the list configuration and generate the child state */
+									for(var i = 0, l = cfg.items.length; i < l; i++)
+									{
+										item = cfg.items[i];
+
+										istate = {};
+
+										istate.ref = qq.place(item.ref);
+
+										istate.uid = item.uid;
+										istate.path = item.path;
+
+										istate.children = {};
+
+										for(var each in cfg.li.selectors)
+										{
+											so = cfg.li.selectors[each];
+
+											child = item.children[each];
+
+											//child.id
+											//child.path
+											//child.uid
+											//child.group
+
+											if(child.group == true)
+											{
+												cstate = {id: child.id, path: child.path, uid: child.uid, group: child.group};
+											}
+											else
+											{
+												cstate = {id: child.id, path: child.path, uid: child.uid};
+											}
+
+											cstate.dom = qq.place(child.dom);
+
+											if(child.domqq != null)
+											{
+												cstate.domqq = qq.place(child.domqq);
+											}
+
+											wdgt = WIDGETS[so.type];
+
+											if(wdgt.get != null)
+											{
+												cstate.data = wdgt.get(istate.ref, cfg.li);
+											}
+											else
+											{
+												// TODO
+											}
+
+											istate.children[each] = cstate;
+										}
+
+										witems.push(istate);
+
+									} /* end for i */
+
+									state.items = witems;
+
+									// if(cfg.items == null)
+									// {
+									// 	cfg.items = [];
+									// }
+
+									// var itemCfg = {ref:clone, children:{}};
+									
+									// cfg.items.push(itemCfg);
+
+									// initChildSelectors(index, cfg, itemCfg);
+									// , val, TRANSFORMERS
+
+									//applyDataToChildSelectors(cfg, itemCfg, val, TRANSFORMERS);
+								}
+								else if(cfg.li.type != null)
+								{
+
+									/* go through each item in the list configuration and generate the child state */
+									for(var i = 0, l = cfg.items.length; i < l; i++)
+									{
+										item = cfg.items[i];
+
+										istate = {};
+
+										istate.uid = item.uid;
+										istate.path = item.path;
+
+										istate.ref = qq.place(item.ref);
+										
+										istate.dom = qq.place(item.dom);
+
+										if(item.domqq != null)
+										{
+											istate.domqq = qq.place(item.domqq);
+										}
+
+										wdgt = WIDGETS[cfg.li.type];
+
+										if(wdgt.get != null)
+										{
+											istate.data = wdgt.get(istate.ref, cfg.li);
+										}
+										else
+										{
+											// TODO
+										}
+
+										// istate.id = item.id;
+										// istate.path = item.path;
+										// istate.uid = item.uid;
+
+										witems.push(istate);
+									}
+
+									state.items = witems;
+
+									//debugger;
+									
+									//console.log("W LIST TYPE");
+
+									// if(cfg.item == null)
+									// {
+									// 	cfg.item = {ref:clone};
+									// }
+
+									//  initialize the widget of type cfg.li.type 
+									// processWidget_init_handler(clone, cfg);
+								}
+								else
+								{
+									// TODO what to do here?
+								}
+
+								//SUBSELECTORS
+								//processSelectors(listItem, cfg.li.selectors);
+								// for(var each in cfg.li.selectors)
+								// {
+								// 	listItem.SELECTOR[id] = {cfg:cfg.li.selectors[each], group:false};
+								// }
+							}
+							/* the item is just an html element with values inside of it, very basic */
+							else
+							{
+								// TODO test this, can list work without 'li' configuration?
+								/* sets lists item's value */
+								// setListItemValue(index, iref, cfg, val);
+								
+								// if(cfg.on != null)
+								// {
+								// 	processOnHandlers(index, l, clone, iref, val, cfg);
+								// }
+								debugger;
+							}
+
+							//cfgo.dom
+
+							// dom: module.exports [Node, options: {…}, prevObject: module.exports(1)]
+							// domJQ: [module.exports(1)]
+							// domJQConfig: [{…}]
+							// domJQTag: ["table"]
+							// domqq: null
+
+							// items: (2) [{…}, {…}]   <- where cfg.li.selectors are existent
+
+							// li: {q: "#mmCItem", selectors: {…}}
+							// on: {value: ƒ, render: ƒ}
+							// onCfg: {n: {…}, nint: {…}}
+							// path: "mmCart.main.cartList"
+							// q: "#mmCartList"
+							// type: "list"
+							// uid: "5188a283eede1d366b7847f30dcf9467"
+
+							return state;
+						},
+						loadstate: function ()
+						{
+
 						}
 					}; /* end return object */
 		} (qq)), true); /* end list widget constructor */

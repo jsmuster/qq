@@ -39,7 +39,7 @@ var style = "color: black; background-color: pink; font-weight: bold; font-size:
 /* configure qq */
 
 
-var appRouter = require('./app.js')(qq);
+var appRouter = require('./app.container.js')(qq);
 
 //console.log("QQ  ", JSON.stringify(qq));
 

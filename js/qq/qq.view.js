@@ -22,6 +22,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
+console.log("- injected qq.view.js");
+
 /* REQUIRED:
 	qq.Registry;
 */
@@ -120,6 +122,8 @@ catch(e)
 				SERVICES = {},
 				DEFAULTS = {},
 				DATAVIEWMAP = {},
+
+				DATA = {},
 				
 				pmodule = pmodule,
 				
@@ -132,6 +136,9 @@ catch(e)
 				bInited = false,
 				bConfigured = false;
 			
+			/**
+			* Returns a parent module.
+			*/
 			this.parent = function ()
 			{
 				return pmodule;
@@ -140,7 +147,7 @@ catch(e)
 			/**** SELECTORS ****/
 			
 			/**
-			* Registers a selector with the view.
+			* Registers a selector configuration.
 			*/
 			var registerSelector = function (id, selector)
 			{
@@ -163,7 +170,7 @@ catch(e)
 
 					if(SELECTOR[id] != null)
 					{
-						throw new qq.Error("Selector configuration under (id:" + id + ") is already registered (uid:"+uid+")");
+						throw new qq.Error("qq.View", "registerSelector", "Selector configuration under (id:" + id + ") is already registered (uid:"+uid+")");
 					}
 					else
 					{
@@ -179,7 +186,7 @@ catch(e)
 							{
 								if(WIDGETS[selector.type] == null)
 								{
-									throw new qq.Error("qq.View.registerSelector: Invalid type (type:" + selector.type + ") under selector configuration (id:" + id + "), view id (id:" + viewID + "), module id (id:" + modID + ").");
+									throw new qq.Error("qq.View", "registerSelector", "Invalid type (type:" + selector.type + ") under selector configuration (id:" + id + "), view id (id:" + viewID + "), module id (id:" + modID + ").");
 								}
 							}
 						}
@@ -201,7 +208,7 @@ catch(e)
 						}
 						else if(!isGroup)
 						{
-							throw new qq.Error("qq.View.registerSelector: Selector configuration under (id:" + id + ") is missing a query (q:" + selector.q + "), view id (id:" + viewID + "), module id (id:" + modID + ").");
+							throw new qq.Error("qq.View", "registerSelector", "Selector configuration under (id:" + id + ") is missing a query (q:" + selector.q + "), view id (id:" + viewID + "), module id (id:" + modID + ").");
 						}
 						
 						/* new configuration object for a selector */
@@ -224,7 +231,7 @@ catch(e)
 				}
 				else
 				{
-					throw new qq.Error("Invalid selector id - (id:" + id + ").");
+					throw new qq.Error("qq.view", "registerSelector", "Invalid selector id - (id:" + id + ").");
 				}
 			};
 			this.registerSelector = registerSelector;
@@ -247,6 +254,9 @@ catch(e)
 			
 			/**** TRIGGERS ****/
 			
+			/**
+			* Registers a trigger
+			*/
 			var registerTrigger = function (id, cfg)
 			{
 				if(id != null && id.length > 0)
@@ -295,7 +305,9 @@ catch(e)
 				}
 			};
 			
-			
+			/**
+			* Register default data for a particular selector
+			*/
 			var registerDefault = function (id, val)
 			{
 				if(id != null && id.length > 0)
@@ -325,6 +337,9 @@ catch(e)
 			};
 			
 			
+			/**
+			* Sets a data mapping from 'id' to 'selector'
+			*/
 			var setDataMap = function (id, selector)
 			{
 				if(id != null && id.length > 0)
@@ -340,6 +355,9 @@ catch(e)
 			
 			/**** SERVICES ****/
 			
+			/**
+			* Register service
+			*/
 			var registerService = function (type, cfg)
 			{
 				if(type != null && type.length > 0)
@@ -360,6 +378,9 @@ catch(e)
 			};
 			this.registerService = registerService;
 
+			/**
+			* Registers a data transformer.
+			*/
 			var registerTransformer = function (type, cfg)
 			{
 				if(type != null && type.length > 0)
@@ -406,13 +427,16 @@ catch(e)
 				}
 			};
 			
+			/**
+			*
+			*/
 			var updateService = function (id, data, done)
 			{
 				var cfg = SERVICES[id], nudata = {}, dcounter = 0;
 				
 				if(cfg == null)
 				{
-					throw new qq.Error("qq.view.updateService: The service (id:" + id + ") isn't registered with the view, view id (id:" + viewID + "), module id (id:" + modID + ").");
+					throw new qq.Error("qq.view", "updateService", "The service (id:" + id + ") isn't registered with the view, view id (id:" + viewID + "), module id (id:" + modID + ").");
 				}
 
 				/* copy data from passed data object */
@@ -437,7 +461,7 @@ catch(e)
 							}
 							catch(e)
 							{
-								throw new qq.Error("qq.View.updateService: There was an error executing the cbDone handler for service (id:" + id + "), view id (id:" + viewID + "), module id (id:" + modID + "). " + e);
+								throw new qq.Error("qq.View", "updateService", "There was an error executing the cbDone handler for service (id:" + id + "), view id (id:" + viewID + "), module id (id:" + modID + "). " + e);
 							}
 						}
 
@@ -449,7 +473,7 @@ catch(e)
 							}
 							catch(e)
 							{
-								throw new qq.Error("qq.View.updateService: There was an error executing the done handler for service (id:" + id + "), view id (id:" + viewID + "), module id (id:" + modID + "). " + e);
+								throw new qq.Error("qq.View", "updateService", "There was an error executing the done handler for service (id:" + id + "), view id (id:" + viewID + "), module id (id:" + modID + "). " + e);
 							}
 						}
 					}
@@ -464,7 +488,7 @@ catch(e)
 				
 				if(cfg == null)
 				{
-					throw new qq.Error("qq.view.openService: The service (id:" + id + ") isn't registered with the view, view id (id:" + viewID + "), module id (id:" + modID + ").");
+					throw new qq.Error("qq.view", "openService", "The service (id:" + id + ") isn't registered with the view, view id (id:" + viewID + "), module id (id:" + modID + ").");
 				}
 				
 				/*cfg.type
@@ -508,7 +532,7 @@ catch(e)
 							}
 							catch(e)
 							{
-								throw new qq.Error("qq.View.openService: There was an error executing the done handler for service (id:" + id + "), view id (id:" + viewID + "), module id (id:" + modID + "). " + e);
+								throw new qq.Error("qq.View", "openService", "There was an error executing the done handler for service (id:" + id + "), view id (id:" + viewID + "), module id (id:" + modID + "). " + e);
 							}
 						}
 						
@@ -520,7 +544,7 @@ catch(e)
 							}
 							catch(e)
 							{
-								throw new qq.Error("qq.View.openService: There was an error executing the done handler for service (id:" + id + "), view id (id:" + viewID + "), module id (id:" + modID + "). " + e);
+								throw new qq.Error("qq.View", "openService", "There was an error executing the done handler for service (id:" + id + "), view id (id:" + viewID + "), module id (id:" + modID + "). " + e);
 							}
 						}
 					};
@@ -534,7 +558,7 @@ catch(e)
 					var delFail = function (e, type, msg)
 					{
 						var id = arguments.callee.id;
-						throw new qq.Error("qq.View.openService: Service failure (id:" + id + "), view id (id:" + viewID + "), module id (id:" + modID + "), (errorid:" + type + "), (message:" + msg + ")");
+						throw new qq.Error("qq.View", "openService", "Service failure (id:" + id + "), view id (id:" + viewID + "), module id (id:" + modID + "), (errorid:" + type + "), (message:" + msg + ")");
 					};
 					
 					delFail.id = id;
@@ -547,7 +571,7 @@ catch(e)
 				}
 				else
 				{
-					throw new qq.Error("qq.View.openService: Invalid service url - (url:" + cfg.url + "), view id (id:" + viewID + "), module id (id:" + modID + ").");
+					throw new qq.Error("qq.View", "openService", "Invalid service url - (url:" + cfg.url + "), view id (id:" + viewID + "), module id (id:" + modID + ").");
 				}
 				
 			};
@@ -555,6 +579,9 @@ catch(e)
 			
 			/** ACTIONS **/
 			
+			/**
+			* Registers a View action.
+			*/
 			var registerAction = function (id, del)
 			{
 				if(id != null && id.length > 0)
@@ -563,13 +590,16 @@ catch(e)
 				}
 				else
 				{
-					throw new qq.Error("Invalid action id - (id:" + id + "), view id (id:" + viewID + "), module id (id:" + modID + ").");
+					throw new qq.Error("qq.view", "registerAction","Invalid action id - (id:" + id + "), view id (id:" + viewID + "), module id (id:" + modID + ").");
 				}
 			};
 			this.registerAction = registerAction;
 			
 			/** EVENTS **/
 			
+			/**
+			* Register 'on' events.
+			*/
 			var on = function (type, del)
 			{
 				if(type != null && type.length > 0)
@@ -587,7 +617,7 @@ catch(e)
 							}
 							catch(e)
 							{
-								throw new qq.Error("Unable to execute 'on' handler for view  - (type:" + type + "), view id (id:" + viewID + "), module id (id:" + modID + ").");
+								throw new qq.Error("qq.view", "on","Unable to execute 'on' handler for view  - (type:" + type + "), view id (id:" + viewID + "), module id (id:" + modID + ").");
 							}
 						}
 					}
@@ -598,7 +628,7 @@ catch(e)
 				}
 				else
 				{
-					throw new qq.Error("Invalid event handler type - (type:" + type + "), view id (id:" + viewID + "), module id (id:" + modID + ").");
+					throw new qq.Error("qq.view", "on","Invalid event handler type - (type:" + type + "), view id (id:" + viewID + "), module id (id:" + modID + ").");
 				}
 			};
 			this.on = on;
@@ -625,9 +655,9 @@ catch(e)
 			*/
 			var applyData = function (uid, cfgso, data, map, altMap)
 			{
-				var so, val, arr, i, l, curef, container, wdgt, wdgtCfg, gid, sid, transformer, tranfn, tranData;
+				var so, val, arr, i, l, curef, container, wdgt, wdgtCfg, gid, sid, transformer, tranfn, tranData, dnode;
 				
-				debugger;
+				//debugger;
 
 				if(altMap != null && altMap[uid] != null)
 				{
@@ -652,8 +682,8 @@ catch(e)
 				if(TRANSFORMERS[uid] != null)
 				{
 					transformer = TRANSFORMERS[uid];
-
-					if(transformer.__ != null && typeof(transformer.__) == "function")
+					
+					if(transformer != null && transformer.__ != null && typeof(transformer.__) == "function")
 					{
 						tranfn = transformer.__;
 
@@ -663,9 +693,37 @@ catch(e)
 						}
 						catch(e)
 						{
-							throw new qq.Error("qq.view", "applyData","Error executing transformer (id:" + uid + ").\n" + e);
+							throw new qq.Error("qq.view", "applyData", "Error executing transformer (id:" + uid + ").\n" + e);
 						}
 					}
+					else if(typeof(transformer) == "function")
+					{
+						try
+						{
+							val = transformer(val);
+						}
+						catch(e)
+						{
+							throw new qq.Error("qq.view", "applyData", "Error executing transformer (id:" + uid + ").\n" + e);
+						}
+
+						transformer = null;
+					}
+				}
+
+				//dnode = {val: val};
+
+				//SELECTORS[uid] = dnode;
+
+				val = qq.clone(val);
+
+				cfgso.data = val;
+
+				/* added the alt map if it was used, just because for now */
+				/* TODO figure it out */
+				if(altMap != null && altMap[uid] != null)
+				{
+					dnode.alt = altMap[uid];
 				}
 				
 				if(cfgso.group == true)
@@ -744,7 +802,7 @@ catch(e)
 						cfgso;
 					
 					/* if the selector is a group (concept) */
-					if(so.group != false)
+					if(so.group == true)
 					{
 						cfgso = so;
 					}
@@ -757,6 +815,8 @@ catch(e)
 					var dta = {};
 						dta[uid] = data;
 
+					//so.data = dta;
+
 					/* cfgso :
 						{id, path, items: ncfg, group: true, irefs: {}}
 						{id, path, selector: ncfg, group: false}
@@ -766,7 +826,9 @@ catch(e)
 			};
 			this.setWidgetData = setWidgetData;
 
-			/* Sets data to a widget or group */
+			/**
+			* Sets data to a widget or group of widgets
+			*/
 			var setData = function (data, map, altMap)
 			{
 				console.log("* Set Data", "data", data, "map", map, "altMap", altMap);
@@ -836,21 +898,28 @@ catch(e)
 								}
 								else
 								{
-									cfgso = so.cfg;
+									cfgso = so.selector;
 								}
 							}
 						}
 						
-						applyData(each, cfgso, data, map, altMap);
+						if(cfgso != null)
+						{
+							applyData(each, cfgso, data, map, altMap);
+						}
 					}
 				}
 			};
 			this.setData = setData;
 			
+
+			/**
+			* Gets selector data.
+			*/
 			var getSelectorData = function (cfg, scope)
 			{
 				var container, wdgt;
-				
+				debugger;
 				if((WIDGETS[cfg.type] != null && WIDGETS[cfg.type].cfg != null && WIDGETS[cfg.type].cfg.get != null) && cfg.dom != null)
 				{
 					/* TODO make it possible to do this without jQuery?? */
@@ -874,6 +943,7 @@ catch(e)
 							if(wdgt.get != null)
 							{
 								scope.count++;
+
 								return wdgt.get(container, cfg);
 							}
 						}
@@ -882,8 +952,11 @@ catch(e)
 				
 				return null;
 			};
-			
-			this.getData = function ()
+
+			/**
+			* Retrieves data from the view
+			*/
+			var getData = function ()
 			{
 				var so, cfg, val, arr, i, l, curef, count = 0, data = {}, seldata, lcl = {count:0};
 				
@@ -892,6 +965,7 @@ catch(e)
 					so = SELECTOR[each];
 					
 					count = lcl.count;
+					seldata = null;
 					
 					if(so.group == true)
 					{
@@ -907,8 +981,7 @@ catch(e)
 								}
 								
 								lcl.count++;
-								//console.warn("* get ", so, so.items);
-								//cfg.irefs, cfg.state, cfg.items
+								
 								if(grp.cfg.get != null)
 								{
 									seldata = grp.cfg.get.call(grp.cfg, so.irefs, so.state, so.items);
@@ -919,12 +992,16 @@ catch(e)
 						{
 							/* TODO ERROR - no group registered */
 						}
-						
-						seldata = getSelectorData(cfg, lcl);
+						// TODO this is a mistake, the seldata is set in grp.cfg.get above - this needs to be worked out
+						if(seldata == null)
+						{
+							// TODO plugged a logic hole above, fix this, remove the null check
+							seldata = getSelectorData(cfg, lcl);
+						}
 					}
 					else
 					{
-						cfg = so.cfg;
+						cfg = so.selector;
 						
 						seldata = getSelectorData(cfg, lcl);
 					}
@@ -944,6 +1021,200 @@ catch(e)
 					return null;
 				}
 			};
+			this.getData = getData;
+
+			/**
+			* Retrieves the entire state from the view for use as 'initial' data element later
+			* @returns a null if the view hasn't been initialized
+			*/
+			var getState = function ()
+			{
+				if(bInited == false)
+				{
+					return null;
+				}
+
+				var so, cfg, val, arr, i, l, curef, count = 0, state = {}, selstate, lcl = {count:0}, dnode;
+
+				state.selectors = {};
+				
+				for(var each in SELECTOR)
+				{
+					so = SELECTOR[each];
+
+					// so.id
+					// so.path
+					// so.selector
+					// so.group
+					// so.items
+					// so.irefs
+
+					//dnode = DATA[each];
+
+					count = lcl.count;
+					selstate = null;
+					
+					/* group only */
+					if(so.group == true)
+					{
+						var grp = GROUPS[so.gtype];
+						
+						if(grp != null && grp.cfg != null)
+						{
+							if(grp.cfg.get != null)
+							{
+								if(so.inited != true)
+								{
+									initGroup(so, grp.cfg);
+								}
+								
+								lcl.count++;
+								
+								if(grp.cfg.get != null)
+								{
+									selstate = grp.cfg.get.call(grp.cfg, so.irefs, so.state, so.items);
+								}
+							}
+						}
+						else
+						{
+							/* TODO ERROR - no group registered */
+						}
+						debugger;
+						if(selstate == null)
+						{
+							cfg = so.selector;
+
+							// TODO fix this - this havent been tested 
+							selstate = getSelectorState(cfg, lcl);
+						}
+					}
+					else
+					{
+						cfg = so.selector;
+						
+						//cfg.id
+						//each
+						// cfg.path
+
+						selstate = getSelectorState(cfg, lcl);
+					}
+					
+					if(count < lcl.count)
+					{
+						selstate.id = each;
+						
+						// if(dnode != null)
+						// {
+						// 	selstate.data = dnode.val;
+						// }
+
+						state.selectors[each] = selstate;
+					}
+				}
+				
+				if(lcl.count > 0)
+				{
+					return state;
+				}
+				else
+				{
+					return null;
+				}
+			};
+			this.getState = getState;
+
+
+			/**
+			* Gets selector state.
+			*/
+			var getSelectorState = function (cfg, scope)
+			{
+				var container, wdgt, selstate = {};
+
+				var wdgt = WIDGETS[cfg.type];
+
+				var placedomqq, placedom, elplacing = {};
+				
+				/* make sure the widget has .getstate method implemented */
+				if((wdgt != null && wdgt.cfg != null && wdgt.cfg.getstate != null) && cfg.dom != null)
+				{
+					/* TODO make it possible to do this without jQuery?? */
+					if(qq.isNode(cfg.dom) && cfg.dom.length > 0)
+					{
+						if(cfg.domqq != null && qq.isNode(cfg.domqq) && cfg.domqq.length > 0)
+						{
+							container = cfg.domqq;
+							placedomqq = qq.place(cfg.domqq);
+						}
+						else
+						{
+							container = cfg.dom;
+						}
+
+						placedom = qq.place(cfg.dom);
+						
+						//wdgt = wdgt.cfg;
+
+						selstate.uid = cfg.uid;
+						selstate.path = cfg.path;
+
+						selstate.dom = placedom;
+
+						if(placedomqq != null)
+						{
+							selstate.domqq = placedomqq;
+						}
+						
+						if(wdgt.cfg.getstate != null)
+						{
+							scope.count++;
+
+							/* result of the 'get' life cycle widget method */
+							var res = wdgt.cfg.getstate(container, cfg);
+
+							selstate.state = res;
+						}
+
+						return selstate;
+					}
+				}
+
+				if(cfg.dom != null)
+				{
+					if(qq.isNode(cfg.dom) && cfg.dom.length > 0)
+					{
+						if(cfg.domqq != null && qq.isNode(cfg.domqq) && cfg.domqq.length > 0)
+						{
+							container = cfg.domqq;
+
+							pathdomqq = qq.place(cfg.domqq);
+						}
+
+						pathdom = qq.place(cfg.dom);
+					}
+				}
+				
+				selstate.uid = cfg.uid;
+				selstate.path = cfg.path;
+
+				selstate.pathdom = pathdom;
+
+				if(pathdomqq != null)
+				{
+					selstate.pathdomqq = pathdomqq;
+				}
+
+				return selstate;
+			};
+
+			// var getState = function()
+			// {
+			// 	var data = getData();
+
+			// 	return {viewID: viewID, modID: modID, viewUID: viewUID, data: data};
+			// };
+			// this.getState = getState;
 			
 			/**
 			* Configures the view.
@@ -1081,7 +1352,7 @@ catch(e)
 			var initSelector = function (id, cfgsel)
 			{
 				var ref, refqq;
-				
+				//debugger;
 				ref = viewDOM.find(cfgsel.q);
 				refqq = null;
 				
@@ -1095,7 +1366,7 @@ catch(e)
 						cfgsel.domqq = refqq;
 						
 						processWidget_init(refqq, cfgsel);
-						
+
 						return refqq;
 					}
 					else
@@ -1122,7 +1393,7 @@ catch(e)
 			};
 
 			/**
-			* Goes through the object widgets and registers them.
+			* Goes through the object widgets and registers them with QQ.
 			*/
 			var initWidgets = function ()
 			{
@@ -1138,7 +1409,9 @@ catch(e)
 				}
 			};
 			
-			/* initializes selectors and sets all the references to for all the items */
+			/**
+			* Initializes selectors and sets all the references to for all the items.
+			*/
 			var initSelectors = function ()
 			{
 				/* so - selector object */
@@ -1270,17 +1543,6 @@ catch(e)
 	if(_isNode == false)
 	{
 		registerView(qq);
-		// Registry = require('./qq.Registry.js').Registry;
-
-
-		// if(_hasQQ)
-		// {
-		// 	Object.assign(qq, require('./qq.js'));
-		// }
-		// else
-		// {
-		// 	qq = require('./qq.js');
-		// }
 	}
 	
 }).apply(this, [qq]);

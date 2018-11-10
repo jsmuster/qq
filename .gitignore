@@ -17,4 +17,7 @@ app/carDetails.html
 app/carDetails.js
 package-lock.json
 
+js/qq/qq$.js
+config_examples.json
+
 data
