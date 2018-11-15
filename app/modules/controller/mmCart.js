@@ -9,40 +9,40 @@
 	
 	main = module.registerView("main", "#mmCart");
 	
-	main.triggers = {};
-	// {
-	// 	img1:{q:"#updateImage1", action:"updateImage1", preventDefault:true},
-	// 	img2:{q:"#updateImage2", action:"updateImage2", preventDefault:true}
-	// };
-
+	main.triggers = {
+		cartOrders:{q: "#cartOrders", action: "cartOrders", preventDefault: true},
+		cartList:{q: "#cartList", action: "cartList", preventDefault: true}
+	};
+	
 	main.actions = {
-		updateImage2: function ()
+		cartOrders: function ()
 		{
 			var module = this.parent(),
 				reg = module.registry(),
 				id = "img2";
 			
-			this.openService("updateImage2", {id:id}, function (data, sdata)
+			this.openService("cartOrders", {id:id}, function (data, sdata)
 			{
-				console.warn("data", data);
+				console.warn("cartOrders data", data);
 				this.setData(data, "direct");
-				
+				debugger;
 				qq.updateState({id:sdata.id});
 			},
 			function ()
 			{
-				console.warn("main imageTest 2 fail");
+				debugger;
+				console.warn("main cartOrders 2 fail");
 			});
 		},
-		updateImage1: function ()
+		cartList: function ()
 		{
 			var module = this.parent(),
 				reg = module.registry(),
 				id = "img1";
 			
-			this.openService("updateImage1", {id:id}, function (data, sdata)
+			this.openService("cartList", {id:id}, function (data, sdata)
 			{
-				console.warn("data", data);
+				console.warn("cartList data", data);
 				this.setData(data, "direct");
 				
 				qq.updateState({id:sdata.id});
@@ -54,15 +54,15 @@
 		}
 	};
 	
-	// main.services = {
-	// 	updateImage1:{type:"json", url:"/data/imageTest-01.json", data:{}, dataMap:"direct"},
-	// 	updateImage2:{type:"json", url:"/data/imageTest-02.json", data:{}, dataMap:"direct"}
-	// };
+	main.services = {
+		cartOrders:{type:"json", url:"/data/cartData.json", data:{}, dataMap:"direct"},
+		cartList:{type:"json", url:"/data/cartList.json", data:{}, dataMap:"direct"}
+	};
 		
 	main.defaults = {cartList: {data:[
-			{type:"buy", price:[50.12, 50.13], shares:[11,22], stoploss:0.01}
+			{type:"buy", price:[50.12, 50.13], shares:[8,8], stoploss:0.01}
 			,
-			{type:"buy", price:[50.22, 50.33], shares:[111,222], stoploss:0.02}
+			{type:"buy", price:[50.22, 50.33], shares:[9,9], stoploss:0.02}
 		], dataMap:"direct"}};
 
 	/* made a transformer for the data */
@@ -127,22 +127,76 @@
 	main.widgets = {
 		"mm.cartItem": (function ()
 		{
-			return {init: function(ref, cfg, GROUPS)
+			return {init: function(ref, cfg, initials)
 				{
-					console.log("mm.cartItem (*) init", ref, cfg, GROUPS);
-					debugger;
-				},
-				set: function (ref, data, cfg)
-				{
-					var action = ref.find(".mmCartItemAction"),
-						value = ref.find(".mmCartItemValue");
+					console.log("mm.cartItem (*) init", ref, cfg, initials);
 
-					action.html(data.price);
-					value.html(data.shares);
+					if(initials != null)
+					{
+						if(initials.refs != null)
+						{
+							if(initials.refs.action != null)
+							{
+								cfg.refs = {};
+								
+								cfg.refs.action = qq.place(initials.refs.action);
+							}
+							
+							if(initials.refs.value != null)
+							{
+								if(cfg.refs == null) cfg.refs = {};
+								
+								cfg.refs.value = qq.place(initials.refs.value);
+							}
+						}
+					}
+					else
+					{
+						var action = ref.find(".mmCartItemAction"),
+							value = ref.find(".mmCartItemValue");
+
+						/* set references to dom elements for use in set / get life cycle methods */
+						cfg.refs = {
+							action: action, 
+							value: value
+						};
+					}
+
+					// dom: module.exports [{…}, options: {…}, prevObject: module.exports(1)]
+					// domqq: null
+					// path: "mmCart.main.cartList[0].cartGroup[0]"
+					// q: "#mmCartItem"
+					// ref: module.exports [{…}, options: {…}, prevObject: module.exports(1)]
+					// refs: Proxy {action: Proxy, value: Proxy}
+					// type: "mm.cartItem"
+					// uid: 
+
+					//debugger;
+				},
+				set: function(ref, data, cfg)
+				{
+					//debugger;
+					cfg.refs.action.html(data.price);
+					cfg.refs.value.html(data.shares);
 
 					console.log("mm.cartItem SET ", ref, "\ndata", data, "\ncfg", cfg);
 
-					debugger;
+					
+				},
+				getstate: function(cfg)
+				{
+					var state = {data: {}, refs: {}};
+					
+					var price = cfg.refs.action.html();
+					var shares = cfg.refs.value.html();
+
+					state.data.price = price;
+					state.data.shares = shares;
+
+					state.refs.action = qq.place(cfg.refs.action);
+					state.refs.value = qq.place(cfg.refs.value);
+
+					return state;
 				}};
 		})()
 	};

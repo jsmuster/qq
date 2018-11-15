@@ -6,11 +6,13 @@
             <h3 class="card-header text-center font-weight-bold text-uppercase py-4">Cart</h3>
             
             <div class="btn-group" role="group">
-                <a role="button" class="btn btn-default" href="../orders">Orders</a>
-                <a role="button" class="btn btn-default" href="../cart">Shopping Cart</a>
+                <a id="cartOrders" role="button" class="btn btn-default" href="../orders">Cart Orders</a>
+                <a id="cartList" role="button" class="btn btn-default" href="../cart">Cart Shopping List</a>
 			</div>
+
 			<div>&#160;</div>
             <div>&#160;</div>
+
             <div class="card-body">
                 <div id="table" class="table-editable">
                     <span class="table-add float-right mb-3 mr-2">
@@ -19,20 +21,22 @@
                     	</a>
                     </span>
                     <table id='mmCartList' class="table table-bordered table-responsive-md table-striped text-center">
-                        <tr id='mmCItem'>
-                            <td id='mmCIContainer'>
-                                <div id="mmCIGroup">
-                                    <div id="mmCartItem" class="mmCartItem">
-                                        <div>
-                                        	<div class="mmCartItemAction">$0</div>
-                                        </div>
-                                        <div>
-                                        	<div class="mmCartItemValue">10</div>
+                        <tbody>
+                            <tr id='mmCItem'>
+                                <td id='mmCIContainer'>
+                                    <div id="mmCIGroup">
+                                        <div id="mmCartItem" class="mmCartItem">
+                                            <div>
+                                            	<div class="mmCartItemAction">$0</div>
+                                            </div>
+                                            <div>
+                                            	<div class="mmCartItemValue">10</div>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            </td>
-                        </tr>
+                                </td>
+                            </tr>
+                        </tbody>
                     </table>
                 </div>
             </div>

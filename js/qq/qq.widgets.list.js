@@ -499,10 +499,10 @@ catch(e)
 
 				if(bIs == true)
 				{
-					if(viewDOM.is(cfgchild.q))
-					{
-						ref = viewDOM;
-					}
+					//if(viewDOM.is(cfgchild.q))
+					//{
+					ref = viewDOM;
+					//}
 				}
 				else
 				{
@@ -696,7 +696,7 @@ catch(e)
 			*/
 			var applyDataToChildSelectors = function (cfg, itemCfg, val, TRANSFORMERS)
 			{
-				var so, each, fn, transformer, wdgt;
+				var so, each, fn, transformer, wdgt, container;
 
 				for(each in cfg.li.selectors)
 				{
@@ -728,31 +728,24 @@ catch(e)
 
 						wdgt = WIDGETS[so.type];
 
-						if(wdgt.cfg.set != null)
+						if(wdgt != null && wdgt.cfg.set != null)
 						{
-							// TODO check if this is correct way of setting the data into sub widget
 							if(childCfg.domqq != null)
 							{
-								if(typeof(TRANSFORMERS[each]) == "object")
-								{
-									wdgt.cfg.set(childCfg.domqq, val, childCfg, TRANSFORMERS[each]);
-								}
-								else
-								{
-									wdgt.cfg.set(childCfg.domqq, val, childCfg);
-								}
+								container = childCfg.domqq;
 							}
 							else
 							{
-								if(typeof(TRANSFORMERS[each]) == "object")
-								{
-									wdgt.cfg.set(childCfg.dom, val, childCfg, TRANSFORMERS[each]);
-								}
-								else
-								{
-									wdgt.cfg.set(childCfg.dom, val, childCfg);
-								}
-								
+								container = childCfg.dom;
+							}
+
+							if(typeof(TRANSFORMERS[each]) == "object")
+							{
+								wdgt.cfg.set(container, val, childCfg, TRANSFORMERS[each]);
+							}
+							else
+							{
+								wdgt.cfg.set(container, val, childCfg);
 							}
 						}
 						else
@@ -765,6 +758,9 @@ catch(e)
 				}
 			};
 
+			/**
+			* Sets the data to a child by first running it through a transformer, then figuring out the content element and executing the 'set' life cycle event.
+			*/
 			var applyDataToChild = function (cfg, itemCfg, val, TRANSFORMERS)
 			{
 				var wdgt;
@@ -779,7 +775,7 @@ catch(e)
 				{
 					wdgt = WIDGETS[cfg.li.type];
 					
-					debugger;
+					//debugger;
 
 					/* transform value by transformer function  */
 					if(TRANSFORMERS != null)
@@ -789,13 +785,22 @@ catch(e)
 
 					if(wdgt != null && wdgt.cfg != null && wdgt.cfg.set != null)
 					{
+						var container;
+
+						if(itemCfg.domqq != null && itemCfg.domqq.length > 0 && qq.isNode(itemCfg.domqq) == true)
+						{
+							container = itemCfg.domqq;
+						}
+						else
+						{
+							container = itemCfg.dom;
+						}
+
 						// TODO check if this is correct way of setting the data into sub widget
-						wdgt.cfg.set(itemCfg.ref, val, cfg.li);
+						wdgt.cfg.set(container, val, itemCfg);
 					}
-					else
-					{
-						itemCfg.data = qq.clone(val);
-					}
+
+					itemCfg.data = qq.clone(val);
 				}
 			};
 
@@ -840,7 +845,11 @@ catch(e)
 							itemCfg.path = "[" + index + "]";
 						}
 
-						li = {q:cfg.li.q};
+						/* li is used for generation of unique uid based upon configuration and path */
+						/* TODO figure out if we need to do this - perhaps optimize this */
+						li = {
+							q:cfg.li.q
+						};
 
 						if(cfg.li.type != null)
 						{
@@ -874,9 +883,7 @@ catch(e)
 							cfg.items = [];
 						}
 
-						itemCfg = {ref:clone};
-
-						//debugger;
+						itemCfg = qq.copy(cfg.li, {ref:clone});
 
 						if(cfg.path != null)
 						{
@@ -887,21 +894,15 @@ catch(e)
 							itemCfg.path = "[" + index + "]";
 						}
 
-						li = {q:cfg.li.q};
+						/* TODO optimize - speed this up, no need to make object for hash key */
+						li = {
+							q:cfg.li.q, 
+							type: cfg.li.type
+						};
 
 						if(cfg.li.qq != null)
 						{
 							li.qq = cfg.li.qq;
-						}
-
-						if(cfg.li.type != null)
-						{
-							li.type = cfg.li.type;
-						}
-
-						if(cfg.li.selectors != null)
-						{
-							li.selectors = cfg.li.selectors;
 						}
 
 						itemCfg.uid = qq.GetHashCode(li, itemCfg.path);
@@ -913,7 +914,7 @@ catch(e)
 						/* initialize the widget of type cfg.li.type */
 
 						/* adds dom & domqq to itemCfg */
-						initChild(clone, cfg.li, true);
+						initChild(clone, itemCfg, true);
 						
 						applyDataToChild(cfg, itemCfg, data, TRANSFORMERS);
 					}
@@ -1219,8 +1220,12 @@ catch(e)
 					ecfg = cfg.domJQConfig[index];
 				}
 				
+				/* reset values */
 				i = 0;
 				l = data.length;
+
+				cfg.data = qq.clone(data);
+
 				pholder = qq.$("<div />");
 				
 				/* remove the entire list reference from the HTML DOM to manipulate it - recreate it without it being in the DOM */
@@ -1392,7 +1397,7 @@ catch(e)
 			 * data - list array
 			 * cfg - view configuration
 			 */
-			return {init: function (ref, cfg)
+			return {init: function (ref, cfg, initials)
 						{
 							console.group("LIST INIT");
 
@@ -1418,7 +1423,7 @@ catch(e)
 								
 								cfg.onCfg = onCfg;
 								
-								for(each in cfg.on)
+								for(var each in cfg.on)
 								{
 									if(each.charAt(0) == "n")
 									{
@@ -1435,6 +1440,193 @@ catch(e)
 											}
 										}
 									}
+								}
+							}
+
+							if(initials != null)
+							{
+								var items = initials.items, 
+									icfg; /* item cfg */
+
+								if(initials.data != null)
+								{
+									cfg.data = qq.clone(initials.data);
+								}
+
+								// data: (2) [{…}, {…}]
+								// dom: (12) [1, 1, 1, 0, 0, 0, 0, 0, 0, 4, 0, 1]
+								// id: "cartList"
+								// items: (2) [{…}, {…}]
+								// path: "mmCart.main.cartList"
+								// q: "#mmCartList"
+								// type: "list"
+								// uid: "5188a
+
+								if(cfg.li != null)
+								{
+
+									var item, // item configuration object
+										istate, // item state
+										witems = [], // widgets items
+										so, // list item selector object
+										child, // child item
+										content,
+										cstate,  // child state
+										wdgt;
+
+									if(cfg.li.selectors != null)
+									{
+										if(items != null && items.length > 0)
+										{
+											for(var i = 0, l = items.length; i < l; i++)
+											{
+												icfg = items[i];
+
+												item = {};
+
+												item.uid = icfg.uid;
+												item.path = icfg.path;
+												item.children = {};
+
+												for(var each in cfg.li.selectors)
+												{
+													if(icfg.children[each] != null)
+													{
+														so = cfg.li.selectors[each];
+
+														cstate = icfg.children[each];
+
+														// data: (2) [{…}, {…}]
+														// dom: (14) [1, 1, 1, 0, 0, 0, 0, 0, 0, 4, 0, 1, 1, 0]
+														// domqq: (15) [1, 1, 1, 0, 0, 0, 0, 0, 0, 4, 0, 1, 1, 0, 0]
+														// id: "cartGroup"
+														// items: (2) [{…}, {…}]
+														// path: "mmCart.main.cartList[1].cartGroup"
+														// q: "#mmCIContainer"
+														// qq: "#mmCIGroup"
+														// type: "list"
+														// uid: "9
+														//debugger;
+														
+														child = qq.clone(so);
+
+														if(cstate.group == true)
+														{
+															//child = 
+															qq.copy({id: cstate.id, path: cstate.path, uid: cstate.uid, group: true}, child);
+														}
+														else
+														{
+															//child = 
+															qq.copy({id: cstate.id, path: cstate.path, uid: cstate.uid}, child);
+														}
+
+														if(cstate.q != null)
+														{
+															child.q = qq.clone(cstate.q);
+														}
+
+														if(cstate.qq != null)
+														{
+															child.qq = qq.clone(cstate.qq);
+														}
+
+														if(cstate.dom != null)
+														{
+															child.dom = qq.place(cstate.dom);
+
+															content = child.dom;
+														}
+
+														if(cstate.domqq != null)
+														{
+															child.domqq = qq.place(cstate.domqq);
+															content = child.domqq;
+														}
+
+														if(cstate.data != null)
+														{
+															child.data = qq.clone(cstate.data);
+														}
+
+														if(so.type != null)
+														{
+															wdgt = WIDGETS[so.type];
+
+															if(wdgt != null && wdgt.cfg.init != null)
+															{
+																wdgt.cfg.init(content, child, cstate);
+															}
+														}
+
+														item.children[each] = child;
+													}
+												}
+
+												// children: {cartGroup: {…}}
+												// path: "mmCart.main.cartList[0]"
+												// ref: (13) [1, 1, 1, 0, 0, 0, 0, 0, 0, 4, 0, 1, 0]
+												// uid:
+
+												//icfg.children
+												//icfg.path
+												//icfg.ref
+												//icfg.uid
+
+												witems[witems.length] = item;
+
+											} /* end for items */
+										}
+									}
+									else if(cfg.li.type != null)
+									{
+										if(items != null && items.length > 0)
+										{
+											for(var i = 0, l = items.length; i < l; i++)
+											{
+												icfg = items[i];
+
+												item = {};
+
+												item.uid = icfg.uid;
+												item.path = icfg.path;
+
+												if(icfg.ref != null)
+												{
+													item.ref = qq.place(icfg.ref);
+												}
+
+												if(icfg.dom != null)
+												{
+													item.dom = qq.place(icfg.dom);
+												}
+
+												if(icfg.domqq != null)
+												{
+													item.domqq = qq.place(icfg.domqq);
+												}
+
+												if(icfg.data != null)
+												{
+													item.data = qq.clone(icfg.data);
+												}
+
+												if(WIDGETS[cfg.li.type] != null)
+												{
+													wdgt = WIDGETS[cfg.li.type];
+
+													if(wdgt != null && wdgt.cfg.init != null)
+													{
+														wdgt.cfg.init(content, item, icfg);
+													}
+												}
+
+												witems[witems.length] = item;
+											}
+										}
+									}
+
+									cfg.items = witems;
 								}
 							}
 
@@ -1489,7 +1681,7 @@ catch(e)
 									}
 								}
 							}
-
+							//debugger;
 							console.groupEnd();
 						},
 						get: function (container, cfg)
@@ -1540,16 +1732,108 @@ catch(e)
 
 							//return {list_data:true};
 						},
-						getstate: function (container, cfg)
+						getstate: function (cfg)
 						{
-							var state = {};
+							/* state object to be returned by this method */
+							var state = {type:cfg.type, q: qq.clone(cfg.q)};
+
+							// if(cfg.qq != null)
+							// {
+							// 	state.qq = qq.clone(cfg.qq);
+							// }
+
+							// if(cfg.data != null)
+							// {
+							// 	state.data = qq.clone(cfg.data);
+							// }
+
+							// cfg
+
+							// data: (2) [{…}, {…}]
+							// dom: module.exports [Node, options: {…}, prevObject: module.exports(1)]
+							// domJQ: [module.exports(1)]
+							// domJQConfig: [{…}]
+							// domJQTag: ["table"]
+							// domqq: null
+							// items: (2) [{…}, {…}]
+							// li: {q: "#mmCItem", selectors: {…}}
+							// on: {value: ƒ, render: ƒ}
+							// onCfg: {n: {…}, nint: {…}}
+							// path: "mmCart.main.cartList"
+							// q: "#mmCartList"
+							// type: "list"
+							// uid: "5188a283eede1d366b784
 							
-							if(cfg.domJQ)
-							{
+							// if(cfg.domJQ.length > 0)
+							// {
+							// 	state.domJQ = [];
 
-							}
+							// 	for(var i = 0, l = cfg.domJQ.length; i < l; i++)
+							// 	{
+							// 		state.domJQ[state.domJQ.length] = qq.place(cfg.domJQ[i]);
+							// 	}
+							// }
 
-							debugger;
+							// if(cfg.domJQTag.length > 0)
+							// {
+							// 	state.domJQTag = [];
+
+							// 	for(var i = 0, l = cfg.domJQTag.length; i < l; i++)
+							// 	{
+							// 		state.domJQTag[state.domJQTag.length] = cfg.domJQTag[i];
+							// 	}
+							// }
+
+							// if(cfg.domJQConfig.length > 0)
+							// {
+							// 	state.domJQConfig = [];
+
+							// 	var djqcfg, tmplt, tmpStr;
+
+							// 	for(var i = 0, l = cfg.domJQConfig.length; i < l; i++)
+							// 	{
+							// 		djqcfg = cfg.domJQConfig[i];
+
+							// 		state.domJQConfig[i] = {templates:[]}
+
+							// 		for(var i = 0, l = djqcfg.templates.length; i < l; i++)
+							// 		{
+							// 			/* template */
+							// 			tmplt = djqcfg.templates[i];
+
+							// 			tmpStr = tmplt.toString();
+
+							// 			state.domJQConfig[i].templates.push(tmpStr);
+							// 		}
+
+							// 		state.domJQConfig[state.domJQConfig.length] = tmpStr;
+							// 	}
+							// }
+
+							// TODO these get set when we start setting the data into the widget
+							// see if they are going to be set
+
+							// domJQ: [module.exports(1)]
+							// domJQConfig: [{…}]
+							// domJQTag: ["table"]
+							
+							// items: (2) [{…}, {…}]
+							// li: {q: "#mmCItem", selectors: {…}}
+							
+							// on: {value: ƒ, render: ƒ}
+							// onCfg: {n: {…}, nint: {…}}
+
+							// path: "mmCart.main.cartList"
+							// q: "#mmCartList"
+							// type: "list"
+							// uid:
+							
+							// if(cfg.dom)
+							// {
+
+							// }
+
+							//debugger;
 
 							/* based on configuration figure out the type of list that was built */
 							if(cfg.li != null)
@@ -1561,70 +1845,136 @@ catch(e)
 									child, // child item
 									cstate; // child state
 
-								var wdgt;
+								var wdgt, container;
 
+								/* this list's item, each is a group of selectors */
 								if(cfg.li.selectors != null)
 								{
-									/* go through each item in the list configuration and generate the child state */
-									for(var i = 0, l = cfg.items.length; i < l; i++)
+									//debugger;
+									
+									if(cfg.items != null && cfg.items.length > 0)
 									{
-										item = cfg.items[i];
-
-										istate = {};
-
-										istate.ref = qq.place(item.ref);
-
-										istate.uid = item.uid;
-										istate.path = item.path;
-
-										istate.children = {};
-
-										for(var each in cfg.li.selectors)
+										/* go through each item in the list configuration and generate the child state */
+										for(var i = 0, l = cfg.items.length; i < l; i++)
 										{
-											so = cfg.li.selectors[each];
+											item = cfg.items[i];
 
-											child = item.children[each];
+											// children: {cartGroup: {…}}
+											// path: "mmCart.main.cartList[0]"
+											// ref: module.exports [{…}, options: {…}, prevObject: module.exports(1)]
+											// uid:
 
-											//child.id
-											//child.path
-											//child.uid
-											//child.group
+											istate = {};
 
-											if(child.group == true)
+											istate.ref = qq.place(item.ref);
+
+											istate.uid = item.uid;
+											istate.path = item.path;
+
+											istate.children = {};
+
+											for(var each in cfg.li.selectors)
 											{
-												cstate = {id: child.id, path: child.path, uid: child.uid, group: child.group};
+												so = cfg.li.selectors[each];
+
+												child = item.children[each];
+
+												//child.id
+												//child.path
+												//child.uid
+												//child.group
+
+												// domJQ: [module.exports(1)]
+												// domJQConfig: [{…}]
+												// domJQTag: ["div"]
+
+												// group: false
+												
+												// items: (2) [{…}, {…}]
+												// li: {q: "#mmCartItem", type: "mm.cartItem"}
+												
+												// TODO check this out
+												// onCfg: {n: {…}, nint: {…}}
+
+												/* depending on the child configuration */
+												if(child.group == true)
+												{
+													cstate = {
+														id: child.id, 
+														path: child.path, 
+														uid: child.uid, 
+														group: true};
+												}
+												else
+												{
+													cstate = {
+														id: child.id, 
+														path: child.path, 
+														uid: child.uid
+													};
+												}
+
+												if(child.q != null)
+												{
+													cstate.q = qq.clone(child.q);
+												}
+
+												if(child.qq != null)
+												{
+													cstate.qq = qq.clone(child.qq);
+												}
+
+												/* we have to process the q & qq selectors outside of the 'getstate' method of a widget, ie in a parent.
+												The one who implements a widget that operates on collections of widgets
+												*/
+												if(child.dom != null && qq.isNode(child.dom) && child.dom.length > 0)
+												{
+													if(child.domqq != null && qq.isNode(child.domqq) && child.domqq.length > 0)
+													{
+														cstate.domqq = qq.place(child.domqq);
+														container = child.domqq;
+
+														cstate.dom = qq.place(child.dom);
+													}
+													else
+													{
+														cstate.dom = qq.place(child.dom);
+														container = child.dom;
+													}
+												}
+
+												wdgt = WIDGETS[so.type];
+
+												/* see if the widget has getstate and use it to retrieve the widget state & value */
+												if(wdgt != null && wdgt.cfg.getstate != null)
+												{
+													cstate = qq.copy(wdgt.cfg.getstate(child), cstate);
+												}
+												/* if the widget has no getstate, then try the 'get' to retrieve the value. */
+												else
+												{
+													if(wdgt != null && wdgt.cfg.get != null)
+													{
+														cstate.value = wdgt.cfg.get(container, child);
+													}
+												}
+
+												/* clone data TODO figure out if we need to clone or just set (might be easier / faster) */
+												cstate.data = qq.clone(child.data);
+
+												istate.children[each] = cstate;
 											}
-											else
-											{
-												cstate = {id: child.id, path: child.path, uid: child.uid};
-											}
 
-											cstate.dom = qq.place(child.dom);
+											witems.push(istate);
 
-											if(child.domqq != null)
-											{
-												cstate.domqq = qq.place(child.domqq);
-											}
+										} /* end for i */
 
-											wdgt = WIDGETS[so.type];
+										state.items = witems;
+									}
+									else
+									{
 
-											if(wdgt.get != null)
-											{
-												cstate.data = wdgt.get(istate.ref, cfg.li);
-											}
-											else
-											{
-												// TODO
-											}
-
-											istate.children[each] = cstate;
-										}
-
-										witems.push(istate);
-
-									} /* end for i */
-
-									state.items = witems;
+									}
 
 									// if(cfg.items == null)
 									// {
@@ -1642,7 +1992,7 @@ catch(e)
 								}
 								else if(cfg.li.type != null)
 								{
-
+									//debugger;
 									/* go through each item in the list configuration and generate the child state */
 									for(var i = 0, l = cfg.items.length; i < l; i++)
 									{
@@ -1655,22 +2005,52 @@ catch(e)
 
 										istate.ref = qq.place(item.ref);
 										
-										istate.dom = qq.place(item.dom);
-
-										if(item.domqq != null)
+										if(item.dom != null && qq.isNode(item.dom) && item.dom.length > 0)
 										{
-											istate.domqq = qq.place(item.domqq);
-										}
+											if(item.domqq != null && qq.isNode(item.domqq) && item.domqq.length > 0)
+											{
+												istate.domqq = qq.place(item.domqq);
+												container = item.domqq;
 
-										wdgt = WIDGETS[cfg.li.type];
+												istate.dom = qq.place(item.dom);
+											}
+											else
+											{
+												container = item.dom;
 
-										if(wdgt.get != null)
-										{
-											istate.data = wdgt.get(istate.ref, cfg.li);
+												istate.dom = qq.place(item.dom);
+											}
 										}
 										else
 										{
-											// TODO
+											// TODO error?
+										}
+
+										if(item.q != null)
+										{
+											istate.q = qq.clone(item.q);
+										}
+
+										if(item.qq != null)
+										{
+											istate.qq = qq.clone(item.qq);
+										}
+
+										istate.data = qq.clone(item.data);
+
+										wdgt = WIDGETS[cfg.li.type];
+
+										if(wdgt != null && wdgt.cfg.getstate != null)
+										{
+											istate = qq.copy(wdgt.cfg.getstate(item), istate);
+										}
+										/* if the widget has no getstate, then try the 'get' to retrieve the value. */
+										else
+										{
+											if(wdgt != null && wdgt.cfg.get != null)
+											{
+												istate.value = wdgt.cfg.get(container, item);
+											}
 										}
 
 										// istate.id = item.id;
@@ -1717,7 +2097,7 @@ catch(e)
 								// {
 								// 	processOnHandlers(index, l, clone, iref, val, cfg);
 								// }
-								debugger;
+								
 							}
 
 							//cfgo.dom

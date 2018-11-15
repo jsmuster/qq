@@ -44,7 +44,8 @@ catch(e)
 	var _hasQQ = false,
 		_preQQ,
 		root = null,
-		_isNode = false;
+		_isNode = false,
+		_DEBUG = true;
 
 	/* figure out if qq reference exists, if so, copy all the references from qq into a new object _preQQ */
 
@@ -979,7 +980,7 @@ catch(e)
 					if(qq.fs.existsSync(spath))
 					{
 						var xmlContent = qq.fs.readFileSync(spath, 'utf8');
-
+						debugger;
 						try
 						{
 							//process XML into a document and pass it into the success function
@@ -1679,7 +1680,8 @@ catch(e)
 				hideModule(lastModule);
 			}
 
-			//debugger;
+			var modstate = getApplicationConfig(mid);
+
 			/* if the view doesn't exist then */
 			/* create & insert the view html into the DOM */
 			if(cfgm.view == null)
@@ -1706,15 +1708,9 @@ catch(e)
 					{
 						console.log("qq.init: (5-c) add view string to container.");
 						
-						if(APPSTATE != null && APPSTATE.mods[mid] != null && APPSTATE.mods[mid].view != null)
+						/* the view should be present if gathering of state was success, also means the view is within the dom, no need to re-create it, just re-assign */
+						if(modstate != null && modstate.view != null)
 						{
-							var modstate = APPSTATE.mods[mid];
-
-							//modstate.views;
-							// 
-							// modstate.viewUid
-
-							// view.selectors
 							/* content is a node of the view */
 							cfgm.view = qq.place(modstate.view);
 
@@ -1758,6 +1754,7 @@ catch(e)
 							//APPSTATE.lastModule
 							//APPSTATE.mods
 
+							/* execute module.init in qq.module.js */
 							var fn = cfgm.ref.init(cfgm.uid, cfgm.args, cfgm.viewWrapper);
 							
 							if(fn != null && typeof(fn) == "function")
@@ -1963,12 +1960,18 @@ catch(e)
 		*/
 		var isNode = function(obj)
 		{
-			if(obj == null)
+			/* if no arguments are passed then return true / false if the environment is node js */
+			if(arguments.length == 0)
 			{
 				return _isNode;
 			}
 			else
 			{
+				if(obj == null)
+				{
+					return false;
+				}
+
 				if(obj instanceof qq.$)
 				{
 					return true;
@@ -2010,8 +2013,22 @@ catch(e)
 		    return Object.prototype.toString.call(xs) === '[object Array]';
 		};
 
+
+		var copy = function (from, to)
+		{
+			if(from != null)
+			{
+				for (var name in from)
+			    {
+			        to[name] = from[name];
+			    }
+			}
+
+		    return to;
+		};
+
 		/**
-		* Deep clones an object.
+		* Deep copies an object.
 		*/
 		var clone = function (from, to)
 		{
@@ -2128,13 +2145,15 @@ catch(e)
 				mods = {},
 				modstate;
 
+				debugger;
+
 			for(var each in MODULES)
 			{
 				cfgm = MODULES[each];
 
 				modstate = cfgm.ref.getState();
 
-				if(cfgm.view != null)
+				if(cfgm.view != null && modstate != null)
 				{
 					modstate.view = qq.place(cfgm.view);
 					modstate.viewUID = cfgm.viewUID;
@@ -2155,9 +2174,102 @@ catch(e)
 			APPSTATE = state;
 		};
 
-		var getApplicationConfig = function ()
+		/**
+		* Retrieves the application initial configuration.
+		* @mid module id
+		* @vid view id
+		* @sid selector id
+		* @iid selector item id or index
+		*/
+		var getApplicationConfig = function (mid, vid, sid, iid)
 		{
-			return APPSTATE;
+			/* if we did specify mid */
+			if(arguments.length > 0)
+			{
+				if(APPSTATE != null && APPSTATE.mods != null && APPSTATE.mods[mid] != null)
+				{
+					var modstate = APPSTATE.mods[mid];
+
+					/* if we did specify vid */
+					if(arguments.length > 1)
+					{
+						var vstate;
+
+						if(modstate != null && modstate.views != null && modstate.views[vid] != null)
+						{
+							vstate = modstate.views[vid];
+
+							/* if we did specify selector id */
+							if(arguments.length > 2)
+							{
+								var selstate;
+
+								if(vstate != null && vstate.selectors != null && vstate.selectors[sid] != null)
+								{
+									selstate = vstate.selectors[sid];
+
+									/* if we did specify item identifier */
+									if(arguments.length > 3)
+									{
+										var istate;
+
+										if(selstate != null && selstate.items != null)
+										{
+											istate = selstate.items[iid];
+
+											// if(typeof(iid) == "string")
+											// {
+												
+											// }
+											// else if(selstate.items[iid] instanceof Array);
+											// {
+											// 	istate = selstate.items[iid];
+											// }
+
+											return istate;
+										}
+										else
+										{
+											return null;
+										}
+									}
+									else
+									{
+										/* only 3 arguments - return selector's state */
+										return selstate;
+									}
+								}
+								else
+								{
+									return null;
+								}
+							}
+							else
+							{
+								/* only 2 arguments - return view state */
+								return vstate;
+							}
+						}
+						else
+						{
+							return null;
+						}
+					}
+					else
+					{
+						/* only 1 argument given - return module state */
+						return modstate;
+					}
+				}
+				else
+				{
+					return null;
+				}
+			}
+			else
+			{
+				return APPSTATE ? APPSTATE : null;
+			}
 		}
 
 		/**
@@ -2212,18 +2324,34 @@ catch(e)
 		*/
 		var getPlace = function (element)
 		{
+			//debugger;
+			/* this happens on the server (initially) */
 			if(qq.isNode(element) == true)
 			{
 				var hfrags = [],
-				node = element,
-				pnode,
-				children, i, l,
-				index;
+					node = element,
+					pnode,
+					children, i, l,
+					index;//,
+					//pname; // parent node name
+				
+				//debugger;
 
 				/* find 'node' in parent's children & capture the index all the way to body */
 				while(node.parent() != null && node.parent().length > 0)
 				{
 					pnode = node.parent();
+
+					// if(pnode != null && pnode.length > 0)
+					// {
+					// 	pname = pnode[0].name;
+					// }
+					// else
+					// {
+					// 	pname = null;
+					// }
+
+					//parentName = pnode.tagName;
 
 					children = pnode.children();
 
@@ -2235,8 +2363,20 @@ catch(e)
 						{
 							index = i;
 
+							// if(node[0].name == "tr")
+							// {
+							// 	debugger;
+							// }
 							/* add index to hierarchy frags - a path to be used finding the node */
-							hfrags.unshift(index);
+							//if(_DEBUG)
+							//{
+							hfrags.unshift({i: index, n: node[0].name});
+							// }
+							// else
+							// {
+							// 	hfrags.unshift(index);
+							// }
+
 							node = pnode;
 
 							break;
@@ -2248,6 +2388,7 @@ catch(e)
 			}
 			else
 			{
+				/* initially happens on the client */
 				//debugger;
 
 				var html = qq.$.find('html');
@@ -2264,13 +2405,40 @@ catch(e)
 				{
 					place = placement[i];
 
+					// if(_DEBUG)
+					// {
+					// 	//place = place.i;
+					// }
+					// else
+					// {
+					// 	place = place.index;
+					// }
+
 					if(node != null && typeof(node.children) == "function")
 					{
 						children = node.children();
 
-						if(children[place] != null)
+						/* if the place is a <tr> tag and children is only one <tbody> */
+						/* get children of children */
+						if(place.n == "tr")
 						{
-							node = qq.$(children[place]);
+							if(children != null && children.length == 1)
+							{
+								var cnode = children[0];
+								
+								if(cnode.tagName != null && cnode.tagName.toLowerCase() == "tbody")
+								{
+									children = children.children();
+								}
+							}
+
+							//debugger;
+							 //if(node.name == "tbody"
+						}
+
+						if(children[place.i] != null)
+						{
+							node = qq.$(children[place.i]);
 						}
 						else
 						{
@@ -2520,7 +2688,8 @@ catch(e)
 
 					place: getPlace.bind(scope),
 
-					clone: clone.bind(scope)
+					clone: clone.bind(scope),
+					copy: copy.bind(scope)
 
 					//$: qq$
 				};

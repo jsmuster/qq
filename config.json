@@ -1,6 +1,7 @@
 {
 	"access":{
 		"app": {"subfolders": true},
+		"data": {"subfolders": true},
 		"assets":{"subfolders": true},
 		"assets/js":{"linkto": "./", "q":["app.container.js", "app.js"]},
 		"assets/js/qq":{"linkto": "js/qq"},

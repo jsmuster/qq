@@ -133,6 +133,8 @@ catch(e)
 				viewID = id,
 				modID = modID,
 				viewDOM,
+				vinitials = null, /* view initials */
+				bInitials = false,
 				bInited = false,
 				bConfigured = false;
 			
@@ -286,6 +288,20 @@ catch(e)
 					for(var each in trigs)
 					{
 						this.registerTrigger(each, trigs[each]);
+					}
+				}
+			};
+
+			/* TODO - test when no actions are registered yet we call upon them. Make sure thats easy to understand, perhaps pre-process these cases that cause error in configuration right away. */
+			var processActions = function ()
+			{
+				var actions = this.actions;
+				
+				if(actions != null)
+				{
+					for(var each in actions)
+					{
+						this.registerAction(each, actions[each]);
 					}
 				}
 			};
@@ -651,13 +667,16 @@ catch(e)
 			* @cfgso selector configuration object
 			* @data data to apply to selector widget
 			* @map data mapping
-			* @altMap alternative mapping
+			* @altMap alternative mapping, which is map[uid] = 'com.xsenio.path' into the data object. The altMap helps retrieve a value from a more complicated path in an object.
 			*/
 			var applyData = function (uid, cfgso, data, map, altMap)
 			{
 				var so, val, arr, i, l, curef, container, wdgt, wdgtCfg, gid, sid, transformer, tranfn, tranData, dnode;
 				
 				//debugger;
+
+				// TODO figure out when we need to select .data inside a data node or maybe not use .data inside a data node.
+				// does the data come in data nodes? if so, need some identifier
 
 				if(altMap != null && altMap[uid] != null)
 				{
@@ -675,7 +694,17 @@ catch(e)
 				}
 				else
 				{
-					val = data[uid];
+					if(data[uid] != null)
+					{
+						if(data[uid].data != null)
+						{
+							val = data[uid].data;
+						}
+						else
+						{
+							val = data[uid];
+						}
+					}
 				}
 
 				/* apply transformer to data */
@@ -1023,6 +1052,43 @@ catch(e)
 			};
 			this.getData = getData;
 
+
+			/**
+			* Retrieves trigger state.
+			*/
+			var getStateTriggers = function ()
+			{
+				var striggers = {}, /* state triggers - object that holds configuration for all the triggers */
+					trstate, /* trigger state - object that gets created for every trigger */
+					cfgtr; /* trigger configuration */
+
+				for(var each in TRIGGERS)
+				{
+					cfgtr = TRIGGERS[each];
+
+					trstate = {};
+
+					trstate.q = qq.clone(cfgtr.q);
+					trstate.qq = qq.clone(cfgtr.qq);
+
+					trstate.dom = qq.place(cfgtr.dom);
+
+					if(cfgtr.domqq != null)
+					{
+						trstate.domqq = qq.place(cfgtr.domqq);
+					}
+
+					trstate.action = qq.clone(cfgtr.action);
+
+					trstate.preventDefault = cfgtr.preventDefault;
+
+					striggers[each] = trstate;
+				}
+
+
+				return striggers;
+			};
+
 			/**
 			* Retrieves the entire state from the view for use as 'initial' data element later
 			* @returns a null if the view hasn't been initialized
@@ -1034,10 +1100,22 @@ catch(e)
 					return null;
 				}
 
-				var so, cfg, val, arr, i, l, curef, count = 0, state = {}, selstate, lcl = {count:0}, dnode;
+				var so, 
+					cfg, 
+					val, 
+					arr, 
+					i, l, 
+					curef, 
+					count = 0, 
+					state = {}, 
+					selstate, 
+					lcl = {count:0}, 
+					dnode;
 
 				state.selectors = {};
-				
+
+				state.triggers = getStateTriggers();
+
 				for(var each in SELECTOR)
 				{
 					so = SELECTOR[each];
@@ -1125,6 +1203,52 @@ catch(e)
 			this.getState = getState;
 
 
+			// var convertCfgItem = function (ref)
+			// {
+			// 	if(ref != null)
+			// 	{
+			// 		if(ref instanceof Array)
+			// 		{
+			// 			var arr = [];
+			// 			for(var i = 0, l = ref.length; i < l; i++)
+			// 			{
+			// 				arr[arr.length] = convertCfgItem()
+			// 			}
+			// 		}
+			// 		else if(typeof(ref) == "object")
+			// 		{
+			// 			for(var each in ref)
+			// 			{
+
+			// 			}
+			// 		}
+			// 		else
+			// 		{
+			// 			if(qq.isNode(ref) && ref.length > 0)
+			// 			{
+			// 				return qq.place(ref);
+			// 			}
+			// 			else
+			// 			{
+			// 				return qq.clone(ref);
+			// 			}
+			// 		}
+			// 	}
+			// 	else
+			// 	{
+			// 		return null;
+			// 	}
+			// };
+
+			// var getSelectorState = function (cfg, scope)
+			// {
+			// 	scope.count++;
+
+
+
+			// 	return convertCfgItem(cfg);
+			// };
+
 			/**
 			* Gets selector state.
 			*/
@@ -1135,74 +1259,47 @@ catch(e)
 				var wdgt = WIDGETS[cfg.type];
 
 				var placedomqq, placedom, elplacing = {};
-				
-				/* make sure the widget has .getstate method implemented */
-				if((wdgt != null && wdgt.cfg != null && wdgt.cfg.getstate != null) && cfg.dom != null)
-				{
-					/* TODO make it possible to do this without jQuery?? */
-					if(qq.isNode(cfg.dom) && cfg.dom.length > 0)
-					{
-						if(cfg.domqq != null && qq.isNode(cfg.domqq) && cfg.domqq.length > 0)
-						{
-							container = cfg.domqq;
-							placedomqq = qq.place(cfg.domqq);
-						}
-						else
-						{
-							container = cfg.dom;
-						}
-
-						placedom = qq.place(cfg.dom);
-						
-						//wdgt = wdgt.cfg;
-
-						selstate.uid = cfg.uid;
-						selstate.path = cfg.path;
-
-						selstate.dom = placedom;
-
-						if(placedomqq != null)
-						{
-							selstate.domqq = placedomqq;
-						}
-						
-						if(wdgt.cfg.getstate != null)
-						{
-							scope.count++;
-
-							/* result of the 'get' life cycle widget method */
-							var res = wdgt.cfg.getstate(container, cfg);
-
-							selstate.state = res;
-						}
-
-						return selstate;
-					}
-				}
-
-				if(cfg.dom != null)
-				{
-					if(qq.isNode(cfg.dom) && cfg.dom.length > 0)
-					{
-						if(cfg.domqq != null && qq.isNode(cfg.domqq) && cfg.domqq.length > 0)
-						{
-							container = cfg.domqq;
-
-							pathdomqq = qq.place(cfg.domqq);
-						}
-
-						pathdom = qq.place(cfg.dom);
-					}
-				}
-				
+				//debugger;
 				selstate.uid = cfg.uid;
 				selstate.path = cfg.path;
 
-				selstate.pathdom = pathdom;
-
-				if(pathdomqq != null)
+				if(cfg.type != null)
 				{
-					selstate.pathdomqq = pathdomqq;
+					selstate.type = cfg.type;
+				}
+				
+				/* make sure the widget has .getstate method implemented */
+				if(wdgt != null && wdgt.cfg != null && wdgt.cfg.getstate != null)
+				{
+					if(cfg.dom != null && qq.isNode(cfg.dom) && cfg.dom.length > 0)
+					{
+						if(cfg.domqq != null && qq.isNode(cfg.domqq) && cfg.domqq.length > 0)
+						{
+							selstate.domqq = qq.place(cfg.domqq);
+							container = cfg.domqq;
+
+							selstate.dom = qq.place(cfg.dom);
+						}
+						else
+						{
+							selstate.dom = qq.place(cfg.dom);
+							container = cfg.dom;
+						}
+					}
+
+					scope.count++;
+
+					/* result of the 'get' life cycle widget method */
+					selstate = qq.copy(wdgt.cfg.getstate(cfg), selstate);
+
+					return selstate;
+				}
+				else if(wdgt.cfg.get != null)
+				{
+					scope.count++;
+
+					/* result of the 'get' life cycle widget method */
+					selstate.value = wdgt.cfg.get(container, cfg);
 				}
 
 				return selstate;
@@ -1228,6 +1325,7 @@ catch(e)
 						throw new qq.Error("qq.View", "configure", "Incorrect view uid (uid:" + uid + ").");
 					}
 					
+					processActions.call(this);
 					processTriggers.call(this);
 					
 					processSelectors.call(this);
@@ -1241,96 +1339,154 @@ catch(e)
 			};
 			this.configure = configure;
 			
+
 			/**
-			* Initializes the triggers within the view.
+			* Initializes an action on a trigger.
+			*/
+			var applyActionHandlerToTrigger = function (cfgtr)
+			{
+				if(cfgtr.action != null && cfgtr.action.length > 0)
+				{
+					var del = function (e)
+					{
+						var ref = arguments.callee.ref,
+							action = arguments.callee.action,
+							preventDefault = arguments.callee.preventDefault,
+							fn = ACTIONS[action];
+							
+							if(fn == null)
+							{
+								throw new qq.Error("qq.View", "initTriggers: ActionDelegate", "There is no function handler associated with the action (action:" + action + "), view id (id:" + viewID + "), module id (id:" + modID + ").");
+							}
+							
+							try
+							{
+								fn.call(ref);
+							}
+							catch(e)
+							{
+								throw new qq.Error("qq.View", "initTriggers: ActionDelegate", "There was an error executing an action handler for (action:" + action + "), view id (id:" + viewID + "), module id (id:" + modID + "). " + e);
+							}
+							
+							if(preventDefault == true)
+							{
+								e.preventDefault();
+							}
+					};
+					
+					del.ref = this;
+					del.action = cfgtr.action;
+					del.preventDefault = cfgtr.preventDefault;
+					
+					if(cfgtr.domqq != null)
+					{
+						cfgtr.domqq.on("click", del);
+					}
+					else
+					{
+						cfgtr.dom.on("click", del);
+					}
+				}
+			};
+
+			/**
+			* Initializes the triggers within the view. Applies on click events to appropriate dom elements.
 			*/
 			var initTriggers = function ()
 			{
 				var cfgtr, ref, refqq, del;
-				
-				for(var each in TRIGGERS)
+
+				if(bInitials == true)
 				{
-					cfgtr = TRIGGERS[each];
-					
-					ref = viewDOM.find(cfgtr.q);
-					
-					if(cfgtr.qq != null && cfgtr.qq.length > 0)
+					/* go through initial trigger configuration and re-establish the references */
+					for(var each in vinitials.triggers)
 					{
-						refqq = ref.find(cfgtr.qq);
+						cfgtr = vinitials.triggers[each];
 						
-						if(refqq.length > 0)
+						ref = qq.place(cfgtr.dom);
+						
+						if(cfgtr.qq != null && cfgtr.qq.length > 0)
 						{
-							cfgtr.dom = ref;
-							cfgtr.domqq = refqq;
+							refqq = qq.place(cfgtr.domqq);
+							
+							if(refqq != null && refqq.length > 0)
+							{
+								cfgtr.dom = ref;
+								cfgtr.domqq = refqq;
+							}
+							else
+							{
+								throw new qq.Error("qq.View", "initTriggers", "Couldn't find sub selector dom element (qq:" + cfgtr.qq + ") for (trigger:" + each + "), view id (id:" + viewID + "), module id (id:" + modID + ").");
+							}
 						}
 						else
 						{
-							throw new qq.Error("qq.View", "initTriggers", "Couldn't find sub selector (qq:" + cfgtr.qq + ") for (trigger:" + each + "), view id (id:" + viewID + "), module id (id:" + modID + ").");
+							if(ref.length > 0)
+							{
+								cfgtr.dom = ref;
+								cfgtr.domqq = null;
+							}
+							else
+							{
+								throw new qq.Error("qq.View", "initTriggers", "Couldn't find a trigger dom element (q:" + cfgtr.q + ") for (trigger:" + each + "), view id (id:" + viewID + "), module id (id:" + modID + ").");
+							}
 						}
-					}
-					else
-					{
-						if(ref.length > 0)
-						{
-							cfgtr.dom = ref;
-							cfgtr.domqq = null;
-						}
-						else
-						{
-							throw new qq.Error("qq.View", "initTriggers", "Couldn't find a trigger (q:" + cfgtr.q + ") for (trigger:" + each + "), view id (id:" + viewID + "), module id (id:" + modID + ").");
-						}
-					}
-					
-					if(cfgtr.action != null && cfgtr.action.length > 0)
-					{
-						del = function (e)
-						{
-							var ref = arguments.callee.ref,
-								action = arguments.callee.action,
-								preventDefault = arguments.callee.preventDefault,
-								fn = ACTIONS[action];
-								
-								if(fn == null)
-								{
-									throw new qq.Error("qq.ActionDelegate: There is no handler associated with the action (action:" + action + "), view id (id:" + viewID + "), module id (id:" + modID + ").");
-								}
-								
-								try
-								{
-									fn.call(ref);
-								}
-								catch(e)
-								{
-									throw new qq.Error("qq.ActionDelegate: There was an error executing an action handler for (action:" + action + "), view id (id:" + viewID + "), module id (id:" + modID + "). " + e);
-								}
-								
-								if(preventDefault == true)
-								{
-									e.preventDefault();
-								}
-						};
 						
-						del.ref = this;
-						del.action = cfgtr.action;
-						del.preventDefault = cfgtr.preventDefault;
-						
-						if(cfgtr.domqq != null)
+						/* apply action handlers to dom elements only on the client side, where the dom api allows for it */
+						if(_isNode == false)
 						{
-							cfgtr.domqq.on("click", del);
-						}
-						else
-						{
-							cfgtr.dom.on("click", del);
+							applyActionHandlerToTrigger.call(this, cfgtr);
 						}
 					}
 				}
-				
+				else
+				{
+					for(var each in TRIGGERS)
+					{
+						cfgtr = TRIGGERS[each];
+						
+						ref = viewDOM.find(cfgtr.q);
+						
+						if(cfgtr.qq != null && cfgtr.qq.length > 0)
+						{
+							refqq = ref.find(cfgtr.qq);
+							
+							if(refqq.length > 0)
+							{
+								cfgtr.dom = ref;
+								cfgtr.domqq = refqq;
+							}
+							else
+							{
+								throw new qq.Error("qq.View", "initTriggers", "Couldn't find sub selector (qq:" + cfgtr.qq + ") for (trigger:" + each + "), view id (id:" + viewID + "), module id (id:" + modID + ").");
+							}
+						}
+						else
+						{
+							if(ref.length > 0)
+							{
+								cfgtr.dom = ref;
+								cfgtr.domqq = null;
+							}
+							else
+							{
+								throw new qq.Error("qq.View", "initTriggers", "Couldn't find a trigger (q:" + cfgtr.q + ") for (trigger:" + each + "), view id (id:" + viewID + "), module id (id:" + modID + ").");
+							}
+						}
+						
+						/* apply action handlers to dom elements only on the client side, where the dom api allows for it */
+						if(_isNode == false)
+						{
+							applyActionHandlerToTrigger.call(this, cfgtr);
+						}
+					}
+				}
 			};
 
 			/**
 			* Used to initialize a widget
 			*/
-			var processWidget_init = function (container, cfgsel)
+			var processWidget_init = function (container, cfgsel, selinitials)
 			{
 				var wdgt = WIDGETS[cfgsel.type];
 
@@ -1341,7 +1497,14 @@ catch(e)
 					if(wdgt.init != null)
 					{
 						/* this is where we set service data to a widget */
-						wdgt.init(container, cfgsel, GROUPS);
+						if(arguments.length == 3)
+						{
+							wdgt.init(container, cfgsel, selinitials);
+						}
+						else
+						{
+							wdgt.init(container, cfgsel);
+						}
 					}
 				}
 			};
@@ -1351,21 +1514,58 @@ catch(e)
 			*/
 			var initSelector = function (id, cfgsel)
 			{
-				var ref, refqq;
-				//debugger;
-				ref = viewDOM.find(cfgsel.q);
-				refqq = null;
+				var ref, 
+					refqq, 
+					selinitials;
+
+				/* view has initial state */
+				if(bInitials == true && vinitials.selectors[id] != null)
+				{
+					selinitials = vinitials.selectors[id];
+
+					ref = qq.place(selinitials.dom);
+
+					//debugger;
+				}
+				else
+				{
+					ref = viewDOM.find(cfgsel.q);
+					refqq = null;
+				}
+				
+				if(bInitials == true && selinitials != null && selinitials.domqq != null)
+				{
+					refqq = qq.place(selinitials.domqq);
+				}
+				else
+				{
+					refqq = ref.find(cfgsel.qq);
+				}
 				
 				if(cfgsel.qq != null && cfgsel.qq.length > 0)
 				{
-					refqq = ref.find(cfgsel.qq);
+					if(bInitials == true && selinitials != null)
+					{
+						refqq = qq.place(selinitials.domqq);
+					}
+					else
+					{
+						refqq = ref.find(cfgsel.qq);
+					}
 					
 					if(refqq.length > 0)
 					{
 						cfgsel.dom = ref;
 						cfgsel.domqq = refqq;
 						
-						processWidget_init(refqq, cfgsel);
+						if(bInitials == true && selinitials != null)
+						{
+							processWidget_init(refqq, cfgsel, selinitials);
+						}
+						else
+						{
+							processWidget_init(refqq, cfgsel);
+						}
 
 						return refqq;
 					}
@@ -1376,17 +1576,25 @@ catch(e)
 				}
 				else
 				{
-					if(ref.length > 0)
+					if(ref != null && ref.length > 0)
 					{
 						cfgsel.dom = ref;
 						cfgsel.domqq = null;
 						
-						processWidget_init(ref, cfgsel);
+						if(bInitials == true && selinitials != null)
+						{
+							processWidget_init(ref, cfgsel, selinitials);
+						}
+						else
+						{
+							processWidget_init(ref, cfgsel);
+						}
 
 						return ref;
 					}
 					else
 					{
+						debugger;
 						throw new qq.Error("qq.View", "initSelector", "Couldn't find a selector (q:" + cfgsel.q + ") for (selector:" + id + "), view id (id:" + viewID + "), module id (id:" + modID + ").");
 					}
 				}
@@ -1483,11 +1691,13 @@ catch(e)
 			/**
 			* Initializes the qq.View.
 			* @uid view unique identifier
-			* @domNode is the view node
+			* @domNode is the view node for the view
+			* @initials optional argument that is passed during initialization of application from state
 			*/
-			var init = function (uid, domNode)
+			var init = function (uid, domNode, initials)
 			{
 				console.log("** qq.View.init");
+				//debugger;
 				
 				if(bInited != true)
 				{
@@ -1497,32 +1707,51 @@ catch(e)
 					}
 					
 					viewDOM = domNode;
+
+					if(arguments.length == 3 && initials != null)
+					{
+						/* indicate that initials were set */
+						bInitials = true;
+
+						/* view initials */
+						vinitials = initials;
+					}
 					
 					initTriggers.call(this);
-					initSelectors.call(this);
 					initWidgets.call(this);
+
+					initSelectors.call(this);
 
 					var def;
 
 					//using the default data set it here via setData
-
-					for(var each in DEFAULTS)
+					/* set default data if initials are present */
+					if(bInitials == true)
 					{
-						def = DEFAULTS[each];
+						// TODO see if initials contains data but not items, set data then using the same as doing it for bellow 'defaults'
+						//debugger;
 
-						if(def.data != null)
+					}
+					else
+					{
+						for(var each in DEFAULTS)
 						{
-							var sels = this.selectors;
+							def = DEFAULTS[each];
 
-							if(sels != null && sels[each] != null)
+							if(def.data != null)
 							{
-								if(def.dataMap != null)
+								var sels = this.selectors;
+
+								if(sels != null && sels[each] != null)
 								{
-									setWidgetData(each, def.data, def.dataMap);
-								}
-								else
-								{
-									setWidgetData(each, def.data);
+									if(def.dataMap != null)
+									{
+										setWidgetData(each, def.data, def.dataMap);
+									}
+									else
+									{
+										setWidgetData(each, def.data);
+									}
 								}
 							}
 						}

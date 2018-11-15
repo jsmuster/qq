@@ -12,20 +12,22 @@
                     	</a>
                     </span>
                     <table id='mmOrderList' class="table table-bordered table-responsive-md table-striped text-center">
-                        <tr id='mmOItem'>
-                            <td id='mmOIContainer'>
-                                <div id="mmOIGroup">
-                                    <div id="mmOrderItem" class="mmOrderItem">
-                                        <div>
-                                        	<div class="mmOrderItemAction">$0</div>
-                                        </div>
-                                        <div>
-                                        	<div class="mmOrderItemValue">10</div>
+                        <tbody>
+                            <tr id='mmOItem'>
+                                <td id='mmOIContainer'>
+                                    <div id="mmOIGroup">
+                                        <div id="mmOrderItem" class="mmOrderItem">
+                                            <div>
+                                            	<div class="mmOrderItemAction">$0</div>
+                                            </div>
+                                            <div>
+                                            	<div class="mmOrderItemValue">10</div>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            </td>
-                        </tr>
+                                </td>
+                            </tr>
+                        </tbody>
                     </table>
                 </div>
             </div>

@@ -73,9 +73,6 @@ catch(e)
 		}
 		else
 		{
-			debugger;
-
-
 			var loaded = {appscript:false, config:false};
 			var appScript = null;
 

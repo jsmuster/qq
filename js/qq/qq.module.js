@@ -358,28 +358,43 @@ catch(e)
 			var getState = function ()
 			{
 				var cfgv,
-					state = {views:{}},
+					views = {},
 					atom,
-					vstate;
+					vstate,
+					vcount = 0;
 				
 				for(var each in VIEWS)
 				{
 					cfgv = VIEWS[each];
 					
+					/* get state for every view in this module */
 					vstate = cfgv.ref.getState();
 
+					/* get view dom placement */
+					if(cfgv.dom != null)
+					{
+						vstate.dom = qq.place(cfgv.dom);
+					}
+					
 					/* don't include views that haven't been initialized */
 					if(vstate != null)
 					{
 						/* set each view state */
-						//atom = {vstate: vstate};
-						atom = vstate;
-
-						state.views[each] = atom;
+						views[each] = vstate;
 					}
+
+					vcount++;
 				}
 
-				return state;
+				if(vcount > 0)
+				{
+					return {views: views};
+				}
+				else
+				{
+					return {};
+				}
+				
 			};
 			this.getState = getState;
 			
@@ -401,37 +416,64 @@ catch(e)
 					
 					var cfgv, initHandlers;
 
-					var APPSTATE = qq.getConfig();
+					var hasInitials = false, 
+						minitials,
+						viewstate; /* initial view state */
 
-					if(APPSTATE != null)
-					{
-						var mod = APPSTATE.mods[modUID];
-					}
-					else
-					{
+					// if(modstate != null)
+					// {
+					// 	if(minitials != null)
+					// 	{
+					// 		hasInitials = true;
 
-					}
+					// 		vstate.dom
+					// 	}
+					// }
 					
 					/* go through each of the views registered and find their view nodes in the dom */
 					for(var vuid in VIEWS)
 					{
 						cfgv = VIEWS[vuid];
-						
-						if(cfgv.qsel != null && cfgv.qsel.length > 0)
+
+						/* retrieve initial state for this view */
+						viewstate = qq.getConfig(modID, vuid);
+						//debugger;
+						/* there is the initial view configuration, use it instead of going through initialization again */
+						if(viewstate != null)
 						{
-							/* set the 'dom' property in a view configuration */
-							cfgv.dom = viewWrapper.find(cfgv.qsel);
-							
-							/* hide the view right after getting its dom reference */
-							if(cfgv.dom.length > 0)
+							if(viewstate.dom != null)
 							{
-								cfgv.dom.css("display", "none");
-								//cfgv.dom.css("visibility", "hidden");
+								/* associate the view dom with app config as per state */
+								cfgv.dom = qq.place(viewstate.dom);
+							}
+						}
+						else
+						{
+							if(cfgv.qsel != null && cfgv.qsel.length > 0)
+							{
+								/* set the 'dom' property in a view configuration */
+								cfgv.dom = viewWrapper.find(cfgv.qsel);
+								
+								/* hide the view right after getting its dom reference */
+								if(cfgv.dom.length > 0)
+								{
+									cfgv.dom.css("display", "none");
+									//cfgv.dom.css("visibility", "hidden");
+								}
 							}
 						}
 						
 						cfgv.ref.on("pre.init");
-						cfgv.ref.init(cfgv.uid, cfgv.dom);
+
+						if(viewstate != null)
+						{
+							cfgv.ref.init(cfgv.uid, cfgv.dom, viewstate);
+						}
+						else
+						{
+							cfgv.ref.init(cfgv.uid, cfgv.dom);
+						}
+						
 						cfgv.ref.on("post.init");
 					}
 					
@@ -453,7 +495,7 @@ catch(e)
 						for(var i = 0, l = initHandlers.length, cb; i < l; i++)
 						{
 							cb = initHandlers[i];
-
+							//debugger;
 							try
 							{
 								cb();
