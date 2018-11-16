@@ -13,7 +13,7 @@
 		cartOrders:{q: "#cartOrders", action: "cartOrders", preventDefault: true},
 		cartList:{q: "#cartList", action: "cartList", preventDefault: true}
 	};
-	
+
 	main.actions = {
 		cartOrders: function ()
 		{
@@ -25,8 +25,8 @@
 			{
 				console.warn("cartOrders data", data);
 				this.setData(data, "direct");
-				debugger;
-				qq.updateState({id:sdata.id});
+				//debugger;
+				//qq.updateState({id:sdata.id});
 			},
 			function ()
 			{
@@ -45,7 +45,7 @@
 				console.warn("cartList data", data);
 				this.setData(data, "direct");
 				
-				qq.updateState({id:sdata.id});
+				//qq.updateState({id:sdata.id});
 			},
 			function ()
 			{

@@ -1487,6 +1487,26 @@ catch(e)
 												item.uid = icfg.uid;
 												item.path = icfg.path;
 												item.children = {};
+												debugger;
+												if(icfg.ref != null)
+												{
+													item.ref = qq.place(icfg.ref);
+												}
+
+												if(icfg.dom != null)
+												{
+													item.dom = qq.place(icfg.dom);
+												}
+
+												if(icfg.domqq != null)
+												{
+													item.domqq = qq.place(icfg.domqq);
+												}
+
+												if(icfg.data != null)
+												{
+													item.data = qq.clone(icfg.data);
+												}
 
 												for(var each in cfg.li.selectors)
 												{

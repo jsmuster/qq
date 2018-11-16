@@ -2332,10 +2332,11 @@ catch(e)
 					node = element,
 					pnode,
 					children, i, l,
-					index;//,
+					index,
+					nname; //,
 					//pname; // parent node name
 				
-				//debugger;
+				debugger;
 
 				/* find 'node' in parent's children & capture the index all the way to body */
 				while(node.parent() != null && node.parent().length > 0)
@@ -2370,7 +2371,31 @@ catch(e)
 							/* add index to hierarchy frags - a path to be used finding the node */
 							//if(_DEBUG)
 							//{
-							hfrags.unshift({i: index, n: node[0].name});
+							if(_isNode)
+							{
+								/* name should be lower case */
+								nname = node[0].name;
+
+								hfrags.unshift({i: index, n: nname});
+							}
+							else
+							{
+								/* node name should be lower case */
+								nname = node[0].nodeName;
+
+								if(nname != null)
+								{
+									nname = nname.toLowerCase();
+								}
+
+								hfrags.unshift({i: index, n: nname});
+
+								if(pnode[0].nodeName == "HTML")
+								{
+									return hfrags;
+								}
+							}
+							
 							// }
 							// else
 							// {

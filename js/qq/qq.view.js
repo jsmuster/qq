@@ -671,7 +671,19 @@ catch(e)
 			*/
 			var applyData = function (uid, cfgso, data, map, altMap)
 			{
-				var so, val, arr, i, l, curef, container, wdgt, wdgtCfg, gid, sid, transformer, tranfn, tranData, dnode;
+				var so, 
+					val, 
+					arr, i, l, 
+					curef, 
+					container, 
+					wdgt, 
+					wdgtCfg, 
+					gid, 
+					sid, 
+					transformer, 
+					tranfn, 
+					tranData, 
+					dnode;
 				
 				//debugger;
 
@@ -1068,19 +1080,35 @@ catch(e)
 
 					trstate = {};
 
-					trstate.q = qq.clone(cfgtr.q);
-					trstate.qq = qq.clone(cfgtr.qq);
+					if(cfgtr.q != null)
+					{
+						trstate.q = qq.clone(cfgtr.q);
+					}
 
-					trstate.dom = qq.place(cfgtr.dom);
+					if(cfgtr.qq != null)
+					{
+						trstate.qq = qq.clone(cfgtr.qq);
+					}
+
+					if(cfgtr.dom != null)
+					{
+						trstate.dom = qq.place(cfgtr.dom);
+					}
 
 					if(cfgtr.domqq != null)
 					{
 						trstate.domqq = qq.place(cfgtr.domqq);
 					}
 
-					trstate.action = qq.clone(cfgtr.action);
+					if(cfgtr.action != null)
+					{
+						trstate.action = qq.clone(cfgtr.action);
+					}
 
-					trstate.preventDefault = cfgtr.preventDefault;
+					if(cfgtr.preventDefault != null)
+					{
+						trstate.preventDefault = cfgtr.preventDefault;
+					}
 
 					striggers[each] = trstate;
 				}
